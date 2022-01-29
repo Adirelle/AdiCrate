@@ -1,0 +1,47 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - id: vars
+        run: |
+          echo ::set-output name=VERSION::${GITHUB_REF#refs/*/v}
+
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-java@v1
+        with:
+          java-version: 17
+
+      - uses: gradle/gradle-build-action@v2
+        with:
+          arguments: build modrinth
+        env:
+          MOD_VERSION: ${{ steps.vars.outputs.VERSION }}
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+
+      - run: |
+          ./gradlew getChangelog -q --no-header >build/release-CHANGELOG.md
+        env:
+          MOD_VERSION: ${{ steps.vars.outputs.VERSION }}
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: adicrate ${{ steps.vars.outputs.VERSION }}
+          path: "build/libs/*[0-9].jar"
+
+      - uses: softprops/action-gh-release@v1
+        with:
+          name: ${{ steps.vars.outputs.VERSION }}
+          body_path: build/release-CHANGELOG.md
+          files: |
+            build/libs/*[0-9].jar

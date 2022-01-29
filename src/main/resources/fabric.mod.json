@@ -1,0 +1,40 @@
+{
+    "schemaVersion": 1,
+    "id": "adicrate",
+    "version": "${version}",
+    "name": "AdiCrate",
+    "description": "Adirelle's storage block",
+    "authors": [
+        "Adirelle"
+    ],
+    "contact": {
+        "homepage": "https://github.com/Adirelle/AdiCrate",
+        "issues": "https://github.com/Adirelle/AdiCrate/issues",
+        "sources": "https://github.com/Adirelle/AdiCrate"
+    },
+    "license": "MIT",
+    "icon": "assets/adicrate/icon.png",
+    "environment": "*",
+    "entrypoints": {
+        "main": [
+            {
+                "adapter": "kotlin",
+                "value": "dev.adirelle.adicrate.AdiCrate"
+            }
+        ],
+        "client": [
+            {
+                "adapter": "kotlin",
+                "value": "dev.adirelle.adicrate.AdiCrate"
+            }
+        ]
+    },
+    "depends": {
+        "minecraft": "~${minecraftVersion}",
+        "fabricloader": ">=${loaderVersion}",
+        "fabric": "~${fabricVersion}",
+        "fabric-language-kotlin": "~${fabricKotlinVersion}",
+        "libgui": "~${libGuiVersion}",
+        "java": ">=17"
+    }
+}

@@ -1,0 +1,22 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "pattern": [
+        "PSP",
+        "PAP",
+        "PSP"
+    ],
+    "key": {
+        "P": {
+            "tag": "minecraft:planks"
+        },
+        "S": {
+            "tag": "minecraft:wooden_slabs"
+        },
+        "A": {
+            "item": "minecraft:paper"
+        }
+    },
+    "result": {
+        "item": "adicrate:crate"
+    }
+}
