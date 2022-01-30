@@ -1,12 +1,26 @@
 package dev.adirelle.adicrate
 
-import dev.adirelle.adicrate.utils.Mod
+import net.fabricmc.api.ClientModInitializer
+import net.fabricmc.api.EnvType.CLIENT
+import net.fabricmc.api.Environment
+import net.fabricmc.api.ModInitializer
+import org.apache.logging.log4j.LogManager
+import org.apache.logging.log4j.Logger
 
-@Suppress("unused")
-object AdiCrate : Mod("AdiCrate", "adicrate") {
+@Suppress("unused", "MemberVisibilityCanBePrivate")
+object AdiCrate : ModInitializer, ClientModInitializer {
+
+    const val MOD_ID = "adicrate"
+    val LOGGER: Logger = LogManager.getLogger("AdiCrate")
 
     override fun onInitialize() {
-        load(Crate)
-        super.onInitialize()
+        Crate.onInitialize()
+        LOGGER.info("AdiCrafter initialized")
+    }
+
+    @Environment(CLIENT)
+    override fun onInitializeClient() {
+        Crate.onInitializeClient()
+        LOGGER.info("AdiCrafter initialized on client")
     }
 }
