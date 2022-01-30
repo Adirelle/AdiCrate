@@ -4,7 +4,6 @@ package dev.adirelle.adicrate.block.entity.internal
 
 import com.google.common.math.LongMath
 import dev.adirelle.adicrate.AdiCrate
-import dev.adirelle.adicrate.network.ContentUpdatePacket
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView
 import net.fabricmc.fabric.api.transfer.v1.storage.base.ResourceAmount
@@ -13,15 +12,12 @@ import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleViewIterator
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext
 import net.fabricmc.fabric.api.transfer.v1.transaction.base.SnapshotParticipant
 import net.minecraft.nbt.NbtCompound
-import net.minecraft.server.world.ServerWorld
-import net.minecraft.util.math.BlockPos
 import kotlin.math.max
 import kotlin.math.min
 
 class CrateStorage(private val listener: Listener) :
     SingleSlotStorage<ItemVariant>,
-    SnapshotParticipant<ResourceAmount<ItemVariant>>(),
-    ContentUpdatePacket.Receiver {
+    SnapshotParticipant<ResourceAmount<ItemVariant>>() {
 
     private val LOGGER = AdiCrate.LOGGER
 
@@ -106,14 +102,6 @@ class CrateStorage(private val listener: Listener) :
     fun writeNbt(nbt: NbtCompound) {
         nbt.put("resource", _resource.toNbt())
         nbt.putLong("amount", _amount)
-    }
-
-    fun createContentUpdatePacket(world: ServerWorld, pos: BlockPos) =
-        ContentUpdatePacket.create(world, pos, _resource, _amount)
-
-    override fun onContentUpdateReceived(resource: ItemVariant, amount: Long) {
-        _resource = resource
-        _amount = amount
     }
 
     fun interface Listener {

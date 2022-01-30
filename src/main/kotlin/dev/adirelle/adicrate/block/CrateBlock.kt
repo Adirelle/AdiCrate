@@ -3,12 +3,9 @@
 package dev.adirelle.adicrate.block
 
 import dev.adirelle.adicrate.AdiCrate
+import dev.adirelle.adicrate.Crate
 import dev.adirelle.adicrate.block.entity.CrateBlockEntity
-import dev.adirelle.adicrate.network.PlayerExtractPacket
 import net.fabricmc.fabric.api.`object`.builder.v1.block.FabricBlockSettings
-import net.fabricmc.fabric.api.block.BlockAttackInteractionAware
-import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext
-import net.fabricmc.fabric.api.transfer.v1.storage.StorageUtil
 import net.minecraft.block.*
 import net.minecraft.block.entity.BlockEntity
 import net.minecraft.entity.player.PlayerEntity
@@ -29,10 +26,10 @@ import net.minecraft.util.hit.BlockHitResult
 import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.Direction
 import net.minecraft.util.math.Direction.NORTH
+import net.minecraft.util.shape.VoxelShapes
 import net.minecraft.world.World
 
-class CrateBlock :
-    BlockWithEntity(FabricBlockSettings.of(Material.WOOD)), BlockAttackInteractionAware {
+class CrateBlock : BlockWithEntity(FabricBlockSettings.of(Material.WOOD).strength(2.0f)) {
 
     private val LOGGER = AdiCrate.LOGGER
 
@@ -47,6 +44,7 @@ class CrateBlock :
     override fun createBlockEntity(pos: BlockPos, state: BlockState): BlockEntity =
         CrateBlockEntity(pos, state)
 
+    @Suppress("DEPRECATION")
     override fun getDroppedStacks(state: BlockState, builder: LootContext.Builder): MutableList<ItemStack> {
         val crate = builder.get(LootContextParameters.BLOCK_ENTITY) as? CrateBlockEntity
             ?: return super.getDroppedStacks(state, builder)
@@ -57,19 +55,16 @@ class CrateBlock :
         }
     }
 
-    override fun onAttackInteraction(
-        state: BlockState,
-        world: World,
-        pos: BlockPos,
-        player: PlayerEntity,
-        hand: Hand,
-        direction: Direction
-    ): Boolean {
-        if (!state.isOf(this) || direction != state.get(FACING)) return false
-        if (world.isClient) {
-            PlayerExtractPacket(player, pos, !player.isSneaking).send()
+    override fun onBlockBreakStart(state: BlockState, world: World, pos: BlockPos, player: PlayerEntity) {
+        if (world.isClient) return
+        (world.getBlockEntity(pos) as? CrateBlockEntity?)?.let { blockEntity ->
+            val start = player.getCameraPosVec(0.0f)
+            val end = start.add(player.getRotationVec(0.0f).multiply(5.0))
+            val blockHit = world.raycastBlock(start, end, pos, VoxelShapes.fullCube(), state)
+            if (blockHit?.side == state.get(FACING)) {
+                blockEntity.extractFor(player, !player.isSneaking)
+            }
         }
-        return true
     }
 
     override fun onUse(
@@ -80,13 +75,15 @@ class CrateBlock :
         hand: Hand,
         hit: BlockHitResult
     ): ActionResult {
-        val crate = (world.getBlockEntity(pos) as? CrateBlockEntity?)?.storage ?: return PASS
-        if (player.getStackInHand(hand).isEmpty || hit.side != state.get(FACING)) return PASS
-        if (world.isClient) return SUCCESS
-        val playerHand = ContainerItemContext.ofPlayerHand(player, hand).mainSlot
-        val moved = StorageUtil.move(playerHand, crate, { true }, playerHand.amount, null)
-        return success(moved > 0)
-
+        return world.getBlockEntity(pos, Crate.BLOCK_ENTITY_TYPE)
+            .map { blockEntity ->
+                when {
+                    world.isClient                -> SUCCESS
+                    hit.side == state.get(FACING) -> success(blockEntity.insertFrom(player, hand))
+                    else                          -> PASS
+                }
+            }
+            .orElse(PASS)
     }
 
     override fun getRenderType(state: BlockState) = BlockRenderType.MODEL
