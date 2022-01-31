@@ -40,7 +40,7 @@ class CrateRenderer(private val ctx: Context) : BlockEntityRenderer<CrateBlockEn
                 // Render Item
                 matrices.push()
                 matrices.translate(0.0, 0.0, -0.5)
-                matrices.scale(1.0f, 1.0f, 0.1f)
+                matrices.scale(0.7f, 0.7f, 0.001f)
 
                 val lightAbove = WorldRenderer.getLightmapCoordinates(world, crate.pos.offset(direction))
                 MinecraftClient.getInstance().itemRenderer
