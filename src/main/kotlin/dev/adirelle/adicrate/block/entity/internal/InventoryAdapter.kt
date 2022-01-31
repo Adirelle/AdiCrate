@@ -10,6 +10,7 @@ import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.inventory.SidedInventory
 import net.minecraft.item.ItemStack
 import net.minecraft.util.math.Direction
+import kotlin.math.min
 
 class InventoryAdapter(
     private val backing: SingleSlotStorage<ItemVariant>
@@ -44,7 +45,7 @@ class InventoryAdapter(
     override fun getStack(slot: Int): ItemStack =
         when (slot) {
             INPUT_SLOT  -> ItemStack.EMPTY
-            OUTPUT_SLOT -> resource.toStack(amount.toInt())
+            OUTPUT_SLOT -> resource.toStack(min(amount.toInt(), resource.item.maxCount))
             else        -> throw IndexOutOfBoundsException()
         }
 

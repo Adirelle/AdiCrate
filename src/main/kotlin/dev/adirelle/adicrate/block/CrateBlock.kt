@@ -2,13 +2,17 @@
 
 package dev.adirelle.adicrate.block
 
-import dev.adirelle.adicrate.AdiCrate
 import dev.adirelle.adicrate.Crate
 import dev.adirelle.adicrate.block.entity.CrateBlockEntity
+import dev.adirelle.adicrate.block.entity.internal.InventoryAdapter
+import dev.adirelle.adicrate.network.PullItemC2SPacket
+import net.fabricmc.api.EnvType.CLIENT
+import net.fabricmc.api.Environment
 import net.fabricmc.fabric.api.`object`.builder.v1.block.FabricBlockSettings
 import net.minecraft.block.*
 import net.minecraft.block.entity.BlockEntity
 import net.minecraft.entity.player.PlayerEntity
+import net.minecraft.inventory.SidedInventory
 import net.minecraft.item.BlockItem
 import net.minecraft.item.Item
 import net.minecraft.item.ItemPlacementContext
@@ -16,7 +20,7 @@ import net.minecraft.item.ItemStack
 import net.minecraft.loot.context.LootContext
 import net.minecraft.loot.context.LootContextParameters
 import net.minecraft.state.StateManager.Builder
-import net.minecraft.state.property.Properties.FACING
+import net.minecraft.state.property.Properties.HORIZONTAL_FACING
 import net.minecraft.util.ActionResult
 import net.minecraft.util.ActionResult.*
 import net.minecraft.util.BlockMirror
@@ -26,19 +30,19 @@ import net.minecraft.util.hit.BlockHitResult
 import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.Direction
 import net.minecraft.util.math.Direction.NORTH
-import net.minecraft.util.shape.VoxelShapes
 import net.minecraft.world.World
+import net.minecraft.world.WorldAccess
 
-class CrateBlock : BlockWithEntity(FabricBlockSettings.of(Material.WOOD).strength(2.0f)) {
-
-    private val LOGGER = AdiCrate.LOGGER
+class CrateBlock :
+    BlockWithEntity(FabricBlockSettings.of(Material.WOOD).strength(2.0f)),
+    InventoryProvider {
 
     init {
-        defaultState = stateManager.defaultState.with(FACING, NORTH)
+        defaultState = stateManager.defaultState.with(HORIZONTAL_FACING, NORTH)
     }
 
     override fun appendProperties(builder: Builder<Block, BlockState>) {
-        builder.add(FACING)
+        builder.add(HORIZONTAL_FACING)
     }
 
     override fun createBlockEntity(pos: BlockPos, state: BlockState): BlockEntity =
@@ -55,15 +59,31 @@ class CrateBlock : BlockWithEntity(FabricBlockSettings.of(Material.WOOD).strengt
         }
     }
 
-    override fun onBlockBreakStart(state: BlockState, world: World, pos: BlockPos, player: PlayerEntity) {
-        if (world.isClient) return
-        (world.getBlockEntity(pos) as? CrateBlockEntity?)?.let { blockEntity ->
-            val start = player.getCameraPosVec(0.0f)
-            val end = start.add(player.getRotationVec(0.0f).multiply(5.0))
-            val blockHit = world.raycastBlock(start, end, pos, VoxelShapes.fullCube(), state)
-            if (blockHit?.side == state.get(FACING)) {
-                blockEntity.extractFor(player, !player.isSneaking)
-            }
+    @Environment(CLIENT)
+    @Suppress("UNUSED_PARAMETER")
+    fun onAttackedByPlayer(
+        player: PlayerEntity,
+        world: World,
+        hand: Hand,
+        pos: BlockPos,
+        direction: Direction
+    ): ActionResult =
+        world.getBlockState(pos).let { state ->
+            if (state.isOf(this) && direction == state.get(HORIZONTAL_FACING)) {
+                if (!player.handSwinging) {
+                    PullItemC2SPacket.send(player, pos)
+                    player.swingHand(hand)
+                }
+                // Do not let the client send an "attack" packet
+                FAIL
+            } else
+            // Not ours or not in face, do not care
+                PASS
+        }
+
+    fun pullItems(world: World, pos: BlockPos, player: PlayerEntity) {
+        world.getBlockEntity(pos, Crate.BLOCK_ENTITY_TYPE).ifPresent { blockEntity ->
+            blockEntity.extractFor(player, !player.isSneaking)
         }
     }
 
@@ -78,27 +98,28 @@ class CrateBlock : BlockWithEntity(FabricBlockSettings.of(Material.WOOD).strengt
         return world.getBlockEntity(pos, Crate.BLOCK_ENTITY_TYPE)
             .map { blockEntity ->
                 when {
-                    world.isClient                                      ->
-                        SUCCESS
-                    hit.side == state.get(FACING) && !player.isSneaking ->
-                        success(blockEntity.insertFrom(player, hand))
-                    else                                                -> {
-                        player.openHandledScreen(blockEntity)
-                        success(false)
-                    }
+                    world.isClient                           -> Unit
+                    hit.side == state.get(HORIZONTAL_FACING) -> blockEntity.insertFrom(player, hand)
+                    else                                     -> player.openHandledScreen(blockEntity)
                 }
+                SUCCESS
             }
             .orElse(PASS)
     }
 
     override fun getRenderType(state: BlockState) = BlockRenderType.MODEL
 
+    override fun getInventory(state: BlockState, world: WorldAccess, pos: BlockPos): SidedInventory =
+        world.getBlockEntity(pos, Crate.BLOCK_ENTITY_TYPE).map {
+            InventoryAdapter(it.storage)
+        }.orElseThrow { IllegalStateException("no crate at %s".format(pos.toShortString())) }
+
     override fun rotate(state: BlockState, rotation: BlockRotation): BlockState =
-        state.with(FACING, rotation.rotate(state.get(FACING)))
+        state.with(HORIZONTAL_FACING, rotation.rotate(state.get(HORIZONTAL_FACING)))
 
     override fun mirror(state: BlockState, mirror: BlockMirror): BlockState =
-        state.rotate(mirror.getRotation(state.get(FACING)))
+        state.rotate(mirror.getRotation(state.get(HORIZONTAL_FACING)))
 
     override fun getPlacementState(ctx: ItemPlacementContext): BlockState =
-        defaultState.with(FACING, ctx.placementDirections.first(Direction.Type.HORIZONTAL::test).opposite)
+        defaultState.with(HORIZONTAL_FACING, ctx.placementDirections.first(Direction.Type.HORIZONTAL::test).opposite)
 }

@@ -12,7 +12,6 @@ import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleSlotStorage
 import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleViewIterator
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext
 import net.fabricmc.fabric.api.transfer.v1.transaction.base.SnapshotParticipant
-import net.minecraft.item.ItemStack
 import net.minecraft.nbt.NbtCompound
 import kotlin.math.min
 
@@ -74,18 +73,6 @@ class CrateStorage(private val listener: Listener) :
         }
         return extracted
     }
-
-    fun extract(maxAmount: Long, tx: TransactionContext) =
-        extract(resourceInternal, maxAmount, tx)
-
-    fun toStack(): ItemStack =
-        toStack(amountInternal)
-
-    fun toStack(count: Long): ItemStack =
-        toStack(count.toInt())
-
-    fun toStack(count: Int): ItemStack =
-        resource.toStack(min(min(count, amountInternal.toInt()), resourceInternal.item.maxCount))
 
     override fun iterator(tx: TransactionContext): MutableIterator<StorageView<ItemVariant>> =
         SingleViewIterator.create(this, tx)

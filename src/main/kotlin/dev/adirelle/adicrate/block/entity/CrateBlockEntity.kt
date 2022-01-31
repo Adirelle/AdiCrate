@@ -9,6 +9,7 @@ import dev.adirelle.adicrate.block.entity.internal.UpgradeInventory
 import dev.adirelle.adicrate.screen.CrateScreenHandler
 import dev.adirelle.adicrate.utils.extensions.iterator
 import dev.adirelle.adicrate.utils.extensions.stackSize
+import dev.adirelle.adicrate.utils.logger
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant
@@ -44,12 +45,14 @@ class CrateBlockEntity(pos: BlockPos, state: BlockState) :
         const val UPGRADE_COUNT = 5
     }
 
+    private val LOGGER by logger
+
     private var _storage = CrateStorage(this)
 
     val storage: SingleSlotStorage<ItemVariant> by ::_storage
 
     val facing: Direction
-        get() = cachedState.get(Properties.FACING)
+        get() = cachedState.get(Properties.HORIZONTAL_FACING)
 
     val upgradeInventory: SimpleInventory = UpgradeInventory().also {
         it.addListener {
@@ -110,33 +113,46 @@ class CrateBlockEntity(pos: BlockPos, state: BlockState) :
     override fun getDisplayName() =
         TranslatableText("block.adicrate.tooltip")
 
-    fun extractFor(player: PlayerEntity, fullStack: Boolean) {
-        Transaction.openOuter().use { tx ->
-            val playerStorage = PlayerInventoryStorage.of(player)
-            val resource = _storage.resource
-            val amount = if (fullStack) resource.stackSize else 1L
-            val extracted = _storage.extract(resource, amount, tx)
-            playerStorage.offerOrDrop(resource, extracted, tx)
-            tx.commit()
-        }
-    }
-
-    fun insertFrom(player: PlayerEntity, hand: Hand): Boolean {
-        if (player.getStackInHand(hand).isEmpty) {
-            if (storage.isResourceBlank || storage.amount >= storage.capacity) {
-                return false
+    fun extractFor(player: PlayerEntity, fullStack: Boolean): Long =
+        if (_storage.isResourceBlank || _storage.amount == 0L)
+            0L
+        else
+            Transaction.openOuter().use { tx ->
+                val playerStorage = PlayerInventoryStorage.of(player)
+                val resource = _storage.resource
+                val amount = if (fullStack) resource.stackSize else 1L
+                val extracted = _storage.extract(resource, amount, tx)
+                LOGGER.info("extracting {} {} for player", extracted, resource.item.toString())
+                playerStorage.offerOrDrop(resource, extracted, tx)
+                tx.commit()
+                extracted
             }
-            val playerInventory = PlayerInventoryStorage.of(player)
-            return 0 < StorageUtil.move(
-                playerInventory,
-                storage,
-                { it == storage.resource },
-                storage.capacity - storage.amount,
-                null
-            )
+
+    fun insertFrom(player: PlayerEntity, hand: Hand): Long =
+        when {
+            !player.getStackInHand(hand).isEmpty -> insertHandfulFrom(player, hand)
+            storage.isResourceBlank              -> 0L
+            player.isSneaking                    -> insertAllFrom(player)
+            else                                 -> 0L
         }
 
-        val playerHand = ContainerItemContext.ofPlayerHand(player, hand).mainSlot
-        return 0 < StorageUtil.move(playerHand, storage, { true }, playerHand.amount, null)
+    private fun insertHandfulFrom(player: PlayerEntity, hand: Hand): Long =
+        ContainerItemContext.ofPlayerHand(player, hand).mainSlot.let { playerHand ->
+            val moved = StorageUtil.move(playerHand, storage, { true }, playerHand.amount, null)
+            LOGGER.info("moved {} {} from player hand", moved, storage.resource.item.toString())
+            moved
+        }
+
+    private fun insertAllFrom(player: PlayerEntity): Long {
+        val playerInventory = PlayerInventoryStorage.of(player)
+        val moved = StorageUtil.move(
+            playerInventory,
+            storage,
+            { it == storage.resource },
+            storage.capacity - storage.amount,
+            null
+        )
+        LOGGER.info("moved {} {} from player inventory", moved, storage.resource.item.toString())
+        return moved
     }
 }
