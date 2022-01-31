@@ -10,6 +10,7 @@ import net.fabricmc.api.Environment
 import net.fabricmc.api.ModInitializer
 import net.fabricmc.fabric.api.client.rendering.v1.BlockEntityRendererRegistry
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings
+import net.fabricmc.fabric.api.transfer.v1.item.ItemStorage
 import net.minecraft.block.entity.BlockEntityType
 import net.minecraft.item.BlockItem
 import net.minecraft.item.ItemGroup
@@ -32,6 +33,8 @@ object Crate : ModInitializer, ClientModInitializer {
         BLOCK.register(ID)
         ITEM.register(ID)
         BLOCK_ENTITY_TYPE.register(ID)
+
+        ItemStorage.SIDED.registerForBlockEntity({ blockEntity, _ -> blockEntity.storage }, BLOCK_ENTITY_TYPE)
     }
 
     @Environment(CLIENT)
