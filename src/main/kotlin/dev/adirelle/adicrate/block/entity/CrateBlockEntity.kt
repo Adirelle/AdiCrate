@@ -4,7 +4,9 @@ package dev.adirelle.adicrate.block.entity
 
 import dev.adirelle.adicrate.Crate
 import dev.adirelle.adicrate.block.entity.internal.CrateStorage
-import dev.adirelle.adicrate.block.entity.internal.CrateUpgrade
+import dev.adirelle.adicrate.block.entity.internal.Upgrade
+import dev.adirelle.adicrate.block.entity.internal.UpgradeInventory
+import dev.adirelle.adicrate.screen.CrateScreenHandler
 import dev.adirelle.adicrate.utils.extensions.iterator
 import dev.adirelle.adicrate.utils.extensions.stackSize
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup
@@ -18,19 +20,23 @@ import net.fabricmc.fabric.api.util.NbtType
 import net.minecraft.block.BlockState
 import net.minecraft.block.entity.BlockEntity
 import net.minecraft.entity.player.PlayerEntity
+import net.minecraft.entity.player.PlayerInventory
 import net.minecraft.inventory.SimpleInventory
-import net.minecraft.item.ItemStack
 import net.minecraft.nbt.NbtCompound
 import net.minecraft.network.Packet
 import net.minecraft.network.listener.ClientPlayPacketListener
 import net.minecraft.network.packet.s2c.play.BlockEntityUpdateS2CPacket
+import net.minecraft.screen.NamedScreenHandlerFactory
+import net.minecraft.screen.ScreenHandler
 import net.minecraft.state.property.Properties
+import net.minecraft.text.TranslatableText
 import net.minecraft.util.Hand
 import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.Direction
 
 class CrateBlockEntity(pos: BlockPos, state: BlockState) :
     BlockEntity(Crate.BLOCK_ENTITY_TYPE, pos, state),
+    NamedScreenHandlerFactory,
     CrateStorage.Listener {
 
     companion object {
@@ -45,20 +51,19 @@ class CrateBlockEntity(pos: BlockPos, state: BlockState) :
     val facing: Direction
         get() = cachedState.get(Properties.FACING)
 
-    val upgradeInventory: SimpleInventory = object : SimpleInventory(UPGRADE_COUNT) {
-        override fun getMaxCountPerStack() = 1
-        override fun isValid(slot: Int, stack: ItemStack) = CrateUpgrade.isValid(stack)
-    }.also {
+    val upgradeInventory: SimpleInventory = UpgradeInventory().also {
         it.addListener {
-            markDirty()
-            updateUpgrades(false)
+            if (world?.isClient == false) {
+                updateUpgrades(false)
+                markDirty()
+            }
         }
     }
 
     private fun updateUpgrades(onLoad: Boolean) {
         val newUpgrade = upgradeInventory.iterator().asSequence()
-            .mapNotNull(CrateUpgrade::of)
-            .fold(CrateUpgrade.EMPTY, CrateUpgrade::plus)
+            .mapNotNull(Upgrade::of)
+            .fold(Upgrade.EMPTY, Upgrade::plus)
         if (newUpgrade != _storage.upgrade) {
             _storage.upgrade = newUpgrade
             if (!onLoad) {
@@ -99,6 +104,12 @@ class CrateBlockEntity(pos: BlockPos, state: BlockState) :
         }
     }
 
+    override fun createMenu(syncId: Int, playerInventory: PlayerInventory, player: PlayerEntity): ScreenHandler =
+        CrateScreenHandler(syncId, playerInventory, _storage, upgradeInventory)
+
+    override fun getDisplayName() =
+        TranslatableText("block.adicrate.tooltip")
+
     fun extractFor(player: PlayerEntity, fullStack: Boolean) {
         Transaction.openOuter().use { tx ->
             val playerStorage = PlayerInventoryStorage.of(player)
@@ -112,7 +123,7 @@ class CrateBlockEntity(pos: BlockPos, state: BlockState) :
 
     fun insertFrom(player: PlayerEntity, hand: Hand): Boolean {
         if (player.getStackInHand(hand).isEmpty) {
-            if (storage.isResourceBlank) {
+            if (storage.isResourceBlank || storage.amount >= storage.capacity) {
                 return false
             }
             val playerInventory = PlayerInventoryStorage.of(player)

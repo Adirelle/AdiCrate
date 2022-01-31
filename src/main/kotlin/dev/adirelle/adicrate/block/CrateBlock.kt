@@ -78,9 +78,14 @@ class CrateBlock : BlockWithEntity(FabricBlockSettings.of(Material.WOOD).strengt
         return world.getBlockEntity(pos, Crate.BLOCK_ENTITY_TYPE)
             .map { blockEntity ->
                 when {
-                    world.isClient                -> SUCCESS
-                    hit.side == state.get(FACING) -> success(blockEntity.insertFrom(player, hand))
-                    else                          -> PASS
+                    world.isClient                                      ->
+                        SUCCESS
+                    hit.side == state.get(FACING) && !player.isSneaking ->
+                        success(blockEntity.insertFrom(player, hand))
+                    else                                                -> {
+                        player.openHandledScreen(blockEntity)
+                        success(false)
+                    }
                 }
             }
             .orElse(PASS)

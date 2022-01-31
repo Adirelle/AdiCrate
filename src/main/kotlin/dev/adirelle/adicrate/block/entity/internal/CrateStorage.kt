@@ -3,7 +3,8 @@
 package dev.adirelle.adicrate.block.entity.internal
 
 import com.google.common.math.LongMath
-import dev.adirelle.adicrate.AdiCrate
+import dev.adirelle.adicrate.utils.extensions.stackSize
+import dev.adirelle.adicrate.utils.logger
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView
 import net.fabricmc.fabric.api.transfer.v1.storage.base.ResourceAmount
@@ -11,60 +12,80 @@ import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleSlotStorage
 import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleViewIterator
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext
 import net.fabricmc.fabric.api.transfer.v1.transaction.base.SnapshotParticipant
+import net.minecraft.item.ItemStack
 import net.minecraft.nbt.NbtCompound
-import kotlin.math.max
 import kotlin.math.min
 
 class CrateStorage(private val listener: Listener) :
     SingleSlotStorage<ItemVariant>,
     SnapshotParticipant<ResourceAmount<ItemVariant>>() {
 
-    private val LOGGER = AdiCrate.LOGGER
+    private val LOGGER by logger
 
-    var upgrade = CrateUpgrade()
+    var upgrade = Upgrade()
 
-    @Suppress("PropertyName")
-    private var _resource: ItemVariant = ItemVariant.blank()
+    private var resourceInternal: ItemVariant = ItemVariant.blank()
+    private var amountInternal: Long = 0L
 
-    @Suppress("PropertyName")
-    private var _amount: Long = 0L
+    private val capacityInternal: Long
+        get() = resourceInternal.stackSize * LongMath.pow(2, 4 + upgrade.capacity)
 
-    private fun isOverflowed() = _amount > capacity
+    private fun isOverflowed() = amountInternal > capacityInternal
 
-    override fun insert(resource: ItemVariant, maxAmount: Long, tx: TransactionContext): Long {
-        if (resource.isBlank || maxAmount <= 0 || isOverflowed() || !canCombineInto(resource, _resource)) return 0L
-        val destroyed =
-            if (upgrade.void) max(0, _amount + maxAmount - capacity) else 0L
-        val inserted = min(maxAmount, _amount + maxAmount)
-        if (inserted <= 0) return destroyed
-        updateSnapshots(tx)
-        if (_resource.isBlank) {
-            _resource = resource
+    override fun insert(resource: ItemVariant, maxAmount: Long, tx: TransactionContext) =
+        when {
+            maxAmount <= 0    -> 0
+            isOverflowed()    -> 0
+            !accept(resource) -> 0
+            upgrade.void      -> insertOrDestroy(resource, maxAmount, tx)
+            else              -> insertAtMost(resource, maxAmount, tx)
         }
-        _amount += inserted
-        LOGGER.info(
-            "inserted {} {}s, destroyed {}",
-            inserted,
-            _resource.item.toString(),
-            destroyed
-        )
-        return inserted + destroyed
+
+    private fun insertOrDestroy(resource: ItemVariant, maxAmount: Long, tx: TransactionContext): Long {
+        insertAtMost(resource, maxAmount, tx)
+        return maxAmount
     }
 
-    private fun canCombineInto(inserted: ItemVariant, existing: ItemVariant) =
-        existing.isBlank || inserted.isOf(existing.`object`) && inserted.nbtMatches(existing.nbt) && inserted.item.maxCount > 1
+    private fun insertAtMost(resource: ItemVariant, maxAmount: Long, tx: TransactionContext): Long {
+        val inserted = min(maxAmount, capacityInternal - amountInternal)
+        if (inserted > 0) {
+            updateSnapshots(tx)
+            amountInternal += inserted
+            resourceInternal = resource
+        }
+        return inserted
+    }
+
+    fun accept(resource: ItemVariant) =
+        !resource.isBlank && (
+            resourceInternal.isBlank || (
+                resource.isOf(resourceInternal.`object`) && resource.nbtMatches(resourceInternal.nbt) && resource.item.maxCount > 1
+                )
+            )
 
     override fun extract(resource: ItemVariant, maxAmount: Long, tx: TransactionContext): Long {
-        val extracted = min(_amount, maxAmount)
-        if (resource.isBlank || _resource.isBlank || resource != _resource || extracted <= 0 || isOverflowed()) return 0L
+        val extracted = min(amountInternal, maxAmount)
+        if (resource.isBlank || resourceInternal.isBlank || resource != resourceInternal || extracted <= 0 || isOverflowed()) return 0L
         updateSnapshots(tx)
-        _amount -= extracted
-        LOGGER.info("extracted {} {}s", extracted, _resource.item.toString())
-        if (_amount == 0L && !upgrade.lock) {
-            _resource = ItemVariant.blank()
+        amountInternal -= extracted
+        LOGGER.info("extracted {} {}s", extracted, resourceInternal.item.toString())
+        if (amountInternal == 0L && !upgrade.lock) {
+            resourceInternal = ItemVariant.blank()
         }
         return extracted
     }
+
+    fun extract(maxAmount: Long, tx: TransactionContext) =
+        extract(resourceInternal, maxAmount, tx)
+
+    fun toStack(): ItemStack =
+        toStack(amountInternal)
+
+    fun toStack(count: Long): ItemStack =
+        toStack(count.toInt())
+
+    fun toStack(count: Int): ItemStack =
+        resource.toStack(min(min(count, amountInternal.toInt()), resourceInternal.item.maxCount))
 
     override fun iterator(tx: TransactionContext): MutableIterator<StorageView<ItemVariant>> =
         SingleViewIterator.create(this, tx)
@@ -73,20 +94,20 @@ class CrateStorage(private val listener: Listener) :
         resource.isBlank
 
     override fun getResource() =
-        _resource
+        resourceInternal
 
     override fun getAmount() =
-        _amount
+        amountInternal
 
     override fun getCapacity() =
-        _resource.item.maxCount.toLong() * LongMath.pow(2, 4 + upgrade.capacity)
+        if (upgrade.void) Long.MAX_VALUE else capacityInternal
 
     override fun createSnapshot() =
-        ResourceAmount(_resource, _amount)
+        ResourceAmount(resourceInternal, amountInternal)
 
     override fun readSnapshot(snapshot: ResourceAmount<ItemVariant>) {
-        _resource = snapshot.resource
-        _amount = snapshot.amount
+        resourceInternal = snapshot.resource
+        amountInternal = snapshot.amount
     }
 
     override fun onFinalCommit() {
@@ -94,14 +115,14 @@ class CrateStorage(private val listener: Listener) :
     }
 
     fun readNbt(nbt: NbtCompound) {
-        _resource = ItemVariant.fromNbt(nbt.getCompound("resource"))
-        _amount = nbt.getLong("amount")
-        LOGGER.info("readFromNbt: {}, {}", _resource, _amount)
+        resourceInternal = ItemVariant.fromNbt(nbt.getCompound("resource"))
+        amountInternal = nbt.getLong("amount")
+        LOGGER.info("readFromNbt: {}, {}", resourceInternal, amountInternal)
     }
 
     fun writeNbt(nbt: NbtCompound) {
-        nbt.put("resource", _resource.toNbt())
-        nbt.putLong("amount", _amount)
+        nbt.put("resource", resourceInternal.toNbt())
+        nbt.putLong("amount", amountInternal)
     }
 
     fun interface Listener {

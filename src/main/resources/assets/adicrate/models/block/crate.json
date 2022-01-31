@@ -6,6 +6,7 @@
         "north": "minecraft:block/barrel_side",
         "east": "minecraft:block/barrel_side",
         "south": "minecraft:block/barrel_side",
-        "west": "minecraft:block/barrel_side"
+        "west": "minecraft:block/barrel_side",
+        "particles": "minecraft:block/barrel_side"
     }
 }
