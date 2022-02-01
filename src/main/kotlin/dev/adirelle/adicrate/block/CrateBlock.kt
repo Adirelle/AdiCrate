@@ -4,6 +4,7 @@ package dev.adirelle.adicrate.block
 
 import dev.adirelle.adicrate.Crate
 import dev.adirelle.adicrate.block.entity.CrateBlockEntity
+import dev.adirelle.adicrate.block.entity.internal.CrateStorage
 import dev.adirelle.adicrate.block.entity.internal.InventoryAdapter
 import dev.adirelle.adicrate.network.PullItemC2SPacket
 import net.fabricmc.api.EnvType.CLIENT
@@ -11,6 +12,7 @@ import net.fabricmc.api.Environment
 import net.fabricmc.fabric.api.`object`.builder.v1.block.FabricBlockSettings
 import net.minecraft.block.*
 import net.minecraft.block.entity.BlockEntity
+import net.minecraft.client.item.TooltipContext
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.inventory.SidedInventory
 import net.minecraft.item.BlockItem
@@ -21,6 +23,7 @@ import net.minecraft.loot.context.LootContext
 import net.minecraft.loot.context.LootContextParameters
 import net.minecraft.state.StateManager.Builder
 import net.minecraft.state.property.Properties.HORIZONTAL_FACING
+import net.minecraft.text.Text
 import net.minecraft.util.ActionResult
 import net.minecraft.util.ActionResult.*
 import net.minecraft.util.BlockMirror
@@ -30,6 +33,7 @@ import net.minecraft.util.hit.BlockHitResult
 import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.Direction
 import net.minecraft.util.math.Direction.NORTH
+import net.minecraft.world.BlockView
 import net.minecraft.world.World
 import net.minecraft.world.WorldAccess
 
@@ -48,8 +52,8 @@ class CrateBlock :
     override fun createBlockEntity(pos: BlockPos, state: BlockState): BlockEntity =
         CrateBlockEntity(pos, state)
 
-    @Suppress("DEPRECATION")
     override fun getDroppedStacks(state: BlockState, builder: LootContext.Builder): MutableList<ItemStack> {
+        @Suppress("DEPRECATION")
         val crate = builder.get(LootContextParameters.BLOCK_ENTITY) as? CrateBlockEntity
             ?: return super.getDroppedStacks(state, builder)
         return MutableList(1) {
@@ -57,6 +61,29 @@ class CrateBlock :
                 BlockItem.setBlockEntityNbt(it, crate.type, crate.createNbt())
             }
         }
+    }
+
+    override fun onStateReplaced(
+        state: BlockState?,
+        world: World?,
+        pos: BlockPos?,
+        newState: BlockState?,
+        moved: Boolean
+    ) {
+        super.onStateReplaced(state, world, pos, newState, moved)
+        LOGGER.info("onStateReplace")
+    }
+
+    override fun appendTooltip(
+        stack: ItemStack,
+        world: BlockView?,
+        tooltip: MutableList<Text>,
+        options: TooltipContext
+    ) {
+        if (!stack.isOf(Crate.ITEM)) return
+        val nbt = BlockItem.getBlockEntityNbt(stack) ?: return
+        CrateStorage.itemText(nbt).ifPresent(tooltip::add)
+        tooltip.add(CrateStorage.contentText(nbt))
     }
 
     @Environment(CLIENT)
@@ -110,9 +137,11 @@ class CrateBlock :
     override fun getRenderType(state: BlockState) = BlockRenderType.MODEL
 
     override fun getInventory(state: BlockState, world: WorldAccess, pos: BlockPos): SidedInventory =
-        world.getBlockEntity(pos, Crate.BLOCK_ENTITY_TYPE).map {
-            InventoryAdapter(it.storage)
-        }.orElseThrow { IllegalStateException("no crate at %s".format(pos.toShortString())) }
+        world.getBlockEntity(pos, Crate.BLOCK_ENTITY_TYPE)
+            .map {
+                InventoryAdapter(it.storage)
+            }
+            .orElseThrow { IllegalStateException("no crate at %s".format(pos.toShortString())) }
 
     override fun rotate(state: BlockState, rotation: BlockRotation): BlockState =
         state.with(HORIZONTAL_FACING, rotation.rotate(state.get(HORIZONTAL_FACING)))

@@ -1,2 +1,7 @@
 {
+    "block.adicrate.crate": "Crate",
+    "item.adicrate.crate": "Crate",
+    "gui.adicrate.crate.tooltip.input": "Input",
+    "gui.adicrate.crate.tooltip.output": "Output",
+    "gui.adicrate.crate.tooltip.upgrades": "Upgrades"
 }

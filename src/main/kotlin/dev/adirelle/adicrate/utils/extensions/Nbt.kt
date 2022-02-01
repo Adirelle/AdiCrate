@@ -1,6 +1,7 @@
 package dev.adirelle.adicrate.utils.extensions
 
 import dev.adirelle.adicrate.utils.NbtSerializable
+import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant
 import net.minecraft.item.Item
 import net.minecraft.item.ItemConvertible
 import net.minecraft.item.ItemStack
@@ -89,6 +90,10 @@ operator fun NbtCompound.set(key: String, value: Item) =
 
 operator fun NbtCompound.set(key: String, value: ItemStack) =
     set(key, value, NbtCompound::putStack, ItemStack::isEmpty)
+
+@Suppress("UnstableApiUsage")
+operator fun NbtCompound.set(key: String, value: TransferVariant<*>) =
+    set(key, value, { k, v -> put(k, v.toNbt()) }, TransferVariant<*>::isBlank)
 
 operator fun NbtCompound.set(key: String, value: NbtCompound) =
     set(key, value, { k, v -> put(k, v) }, NbtCompound::isEmpty)

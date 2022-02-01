@@ -3,15 +3,19 @@
 package dev.adirelle.adicrate.screen
 
 import dev.adirelle.adicrate.Crate
-import dev.adirelle.adicrate.block.entity.internal.InventoryAdapter
+import dev.adirelle.adicrate.block.entity.internal.*
 import dev.adirelle.adicrate.block.entity.internal.InventoryAdapter.Companion.INPUT_SLOT
 import dev.adirelle.adicrate.block.entity.internal.InventoryAdapter.Companion.OUTPUT_SLOT
-import dev.adirelle.adicrate.block.entity.internal.SidedInventoryAdapter
-import dev.adirelle.adicrate.block.entity.internal.UpgradeInventory
+import dev.adirelle.adicrate.block.entity.internal.PropertyDelegateAdapter.Companion.AMOUNT_INDEX
+import dev.adirelle.adicrate.block.entity.internal.PropertyDelegateAdapter.Companion.CAPACITY_INDEX
 import dev.adirelle.adicrate.utils.logger
 import io.github.cottonmc.cotton.gui.SyncedGuiDescription
+import io.github.cottonmc.cotton.gui.widget.TooltipBuilder
 import io.github.cottonmc.cotton.gui.widget.WGridPanel
 import io.github.cottonmc.cotton.gui.widget.WItemSlot
+import io.github.cottonmc.cotton.gui.widget.WText
+import io.github.cottonmc.cotton.gui.widget.data.HorizontalAlignment.CENTER
+import io.github.cottonmc.cotton.gui.widget.data.VerticalAlignment
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant
 import net.fabricmc.fabric.api.transfer.v1.item.PlayerInventoryStorage
 import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleSlotStorage
@@ -22,6 +26,9 @@ import net.minecraft.inventory.Inventory
 import net.minecraft.inventory.SidedInventory
 import net.minecraft.inventory.SimpleInventory
 import net.minecraft.item.ItemStack
+import net.minecraft.screen.PropertyDelegate
+import net.minecraft.text.LiteralText
+import net.minecraft.text.TranslatableText
 import net.minecraft.util.math.Direction.NORTH
 import java.util.function.Predicate
 
@@ -30,14 +37,15 @@ class CrateScreenHandler private constructor(
     playerInventory: PlayerInventory,
     contentInventory: SidedInventory,
     upgradeInventory: Inventory,
-    private val storage: SingleSlotStorage<ItemVariant>?
+    propertyDelegate: PropertyDelegate,
+    private val storage: CrateStorage?,
 ) :
     SyncedGuiDescription(
         Crate.SCREEN_HANDLER_TYPE,
         syncId,
         playerInventory,
         contentInventory,
-        null
+        propertyDelegate
     ) {
 
     // Client-side constructor
@@ -49,40 +57,64 @@ class CrateScreenHandler private constructor(
         playerInventory,
         SidedInventoryAdapter(SimpleInventory(InventoryAdapter.SIZE)),
         UpgradeInventory(),
+        ListenablePropertyAdapter(PropertyDelegateAdapter.SIZE),
         null
-    )
+    ) {
+        (propertyDelegate as ListenablePropertyAdapter).callback = { _, _, _ -> updateContentText() }
+    }
 
     // Server-side constructor
     constructor(
         syncId: Int,
         playerInventory: PlayerInventory,
-        storage: SingleSlotStorage<ItemVariant>,
+        storage: CrateStorage,
         upgradeInventory: Inventory
     ) : this(
         syncId,
         playerInventory,
         InventoryAdapter(storage),
         upgradeInventory,
+        PropertyDelegateAdapter(storage),
         storage
     )
 
     private val LOGGER by logger
 
+    private val contentText = WText(LiteralText("here were dragons"))
+
     init {
         val root = rootPanel as? WGridPanel
             ?: throw IllegalStateException("unsupported panel class: ${rootPanel::class.java.name}")
 
-        val inputSlot = WItemSlot.of(blockInventory, INPUT_SLOT)
+        val inputSlot = object : WItemSlot(blockInventory, INPUT_SLOT, 1, 1, false) {
+            override fun addTooltip(tooltip: TooltipBuilder) {
+                tooltip.add(TranslatableText("gui.adicrate.crate.tooltip.input"))
+            }
+        }
         inputSlot.isTakingAllowed = false
         inputSlot.filter = Predicate { contentInventory.canInsert(INPUT_SLOT, it, NORTH) }
         root.add(inputSlot, 3, 1)
 
-        val outputSlot = WItemSlot.of(blockInventory, OUTPUT_SLOT)
+        val outputSlot = object : WItemSlot(blockInventory, OUTPUT_SLOT, 1, 1, false) {
+            override fun addTooltip(tooltip: TooltipBuilder) {
+                tooltip.add(TranslatableText("gui.adicrate.crate.tooltip.output"))
+            }
+        }
         outputSlot.filter = Predicate { contentInventory.canExtract(OUTPUT_SLOT, it, NORTH) }
         outputSlot.isInsertingAllowed = false
         root.add(outputSlot, 5, 1)
 
-        val upgradeSlots = WItemSlot.of(upgradeInventory, 0, upgradeInventory.size(), 1)
+        contentText.apply {
+            setHorizontalAlignment(CENTER)
+            setVerticalAlignment(VerticalAlignment.CENTER)
+        }
+        root.add(contentText, 0, 2, 9, 1)
+
+        val upgradeSlots = object : WItemSlot(upgradeInventory, 0, upgradeInventory.size(), 1, false) {
+            override fun addTooltip(tooltip: TooltipBuilder) {
+                tooltip.add(TranslatableText("gui.adicrate.crate.tooltip.upgrades"))
+            }
+        }
         upgradeSlots.filter = Predicate { upgradeInventory.isValid(0, it) }
         root.add(upgradeSlots, 2, 3)
 
@@ -90,6 +122,12 @@ class CrateScreenHandler private constructor(
         root.add(playerSlots, 0, 4)
 
         root.validate(this)
+    }
+
+    private fun updateContentText() {
+        contentText.setText(
+            CrateStorage.contentText(propertyDelegate[AMOUNT_INDEX], propertyDelegate[CAPACITY_INDEX])
+        )
     }
 
     override fun transferSlot(player: PlayerEntity, index: Int): ItemStack {

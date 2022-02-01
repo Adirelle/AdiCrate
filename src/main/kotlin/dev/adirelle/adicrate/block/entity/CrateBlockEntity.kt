@@ -8,6 +8,7 @@ import dev.adirelle.adicrate.block.entity.internal.Upgrade
 import dev.adirelle.adicrate.block.entity.internal.UpgradeInventory
 import dev.adirelle.adicrate.screen.CrateScreenHandler
 import dev.adirelle.adicrate.utils.extensions.iterator
+import dev.adirelle.adicrate.utils.extensions.set
 import dev.adirelle.adicrate.utils.extensions.stackSize
 import dev.adirelle.adicrate.utils.logger
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup
@@ -41,6 +42,8 @@ class CrateBlockEntity(pos: BlockPos, state: BlockState) :
     CrateStorage.Listener {
 
     companion object {
+
+        private val UPGRADE_NBT_KEY = "upgrades"
 
         const val UPGRADE_COUNT = 5
     }
@@ -83,13 +86,13 @@ class CrateBlockEntity(pos: BlockPos, state: BlockState) :
 
     override fun readNbt(nbt: NbtCompound) {
         _storage.readNbt(nbt)
-        upgradeInventory.readNbtList(nbt.getList("upgrades", NbtType.COMPOUND))
+        upgradeInventory.readNbtList(nbt.getList(UPGRADE_NBT_KEY, NbtType.COMPOUND))
         updateUpgrades(true)
     }
 
     override fun writeNbt(nbt: NbtCompound) {
         _storage.writeNbt(nbt)
-        nbt.put("upgrades", upgradeInventory.toNbtList())
+        nbt[UPGRADE_NBT_KEY] = upgradeInventory.toNbtList()
     }
 
     override fun onContentUpdated() {
@@ -111,7 +114,7 @@ class CrateBlockEntity(pos: BlockPos, state: BlockState) :
         CrateScreenHandler(syncId, playerInventory, _storage, upgradeInventory)
 
     override fun getDisplayName() =
-        TranslatableText("block.adicrate.tooltip")
+        TranslatableText("block.adicrate.crate")
 
     fun extractFor(player: PlayerEntity, fullStack: Boolean): Long =
         if (_storage.isResourceBlank || _storage.amount == 0L)
