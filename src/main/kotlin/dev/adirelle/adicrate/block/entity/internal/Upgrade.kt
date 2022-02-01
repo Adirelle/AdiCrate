@@ -14,7 +14,7 @@ data class Upgrade(
 
         private val upgradeItems = mapOf<Item, Upgrade>(
             Items.LAVA_BUCKET to Upgrade(void = true),
-            Items.SLIME_BALL to Upgrade(lock = true),
+            Items.COBWEB to Upgrade(lock = true),
             Items.IRON_INGOT to Upgrade(capacity = 1),
             Items.DIAMOND to Upgrade(capacity = 2),
             Items.NETHERITE_INGOT to Upgrade(capacity = 3)

@@ -2,7 +2,6 @@
 
 package dev.adirelle.adicrate.block.entity.internal
 
-import com.google.common.math.LongMath
 import dev.adirelle.adicrate.utils.extensions.set
 import dev.adirelle.adicrate.utils.extensions.stackSize
 import dev.adirelle.adicrate.utils.logger
@@ -64,7 +63,7 @@ class CrateStorage(private val listener: Listener) :
     private var amountInternal: Long = 0L
 
     val realCapacity: Long
-        get() = resourceInternal.stackSize * LongMath.pow(2, 4 + upgrade.capacity)
+        get() = resourceInternal.stackSize * (16 * (1 + upgrade.capacity))
 
     private fun isOverflowed() = amountInternal > realCapacity
 
