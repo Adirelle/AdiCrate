@@ -6,6 +6,8 @@ import dev.adirelle.adicrate.Crate
 import dev.adirelle.adicrate.block.entity.internal.CrateStorage
 import dev.adirelle.adicrate.block.entity.internal.Upgrade
 import dev.adirelle.adicrate.block.entity.internal.UpgradeInventory
+import dev.adirelle.adicrate.misc.Network
+import dev.adirelle.adicrate.misc.Network.Node
 import dev.adirelle.adicrate.screen.CrateScreenHandler
 import dev.adirelle.adicrate.utils.extensions.iterator
 import dev.adirelle.adicrate.utils.extensions.set
@@ -39,7 +41,8 @@ import net.minecraft.util.math.Direction
 class CrateBlockEntity(pos: BlockPos, state: BlockState) :
     BlockEntity(Crate.BLOCK_ENTITY_TYPE, pos, state),
     NamedScreenHandlerFactory,
-    CrateStorage.Listener {
+    CrateStorage.Listener,
+    Node {
 
     companion object {
 
@@ -52,7 +55,7 @@ class CrateBlockEntity(pos: BlockPos, state: BlockState) :
 
     private var _storage = CrateStorage(this)
 
-    val storage: SingleSlotStorage<ItemVariant> by ::_storage
+    override val storage: SingleSlotStorage<ItemVariant> by ::_storage
 
     val facing: Direction
         get() = cachedState.get(Properties.HORIZONTAL_FACING)
@@ -76,6 +79,27 @@ class CrateBlockEntity(pos: BlockPos, state: BlockState) :
                 markDirty()
             }
         }
+    }
+
+    private var network: Network? = null
+
+    override fun connectTo(network: Network): Boolean {
+        if (network === this.network) return false
+        this.disconnect()
+        LOGGER.info("connecting to $network")
+        this.network = network
+        network.add(this)
+        return true
+    }
+
+    override fun connectWith(node: Node) =
+        network?.let(node::connectTo) ?: false
+
+    override fun disconnect() {
+        val oldNetwork = network ?: return
+        LOGGER.info("disconnecting from $oldNetwork")
+        network = null
+        oldNetwork.remove(this)
     }
 
     override fun toInitialChunkDataNbt() =

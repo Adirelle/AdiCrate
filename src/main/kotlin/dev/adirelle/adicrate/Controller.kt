@@ -2,21 +2,15 @@
 
 package dev.adirelle.adicrate
 
-import dev.adirelle.adicrate.block.CrateBlock
-import dev.adirelle.adicrate.block.entity.CrateBlockEntity
-import dev.adirelle.adicrate.client.renderer.CrateRenderer
-import dev.adirelle.adicrate.client.screen.CreateScreen
-import dev.adirelle.adicrate.screen.CrateScreenHandler
+import dev.adirelle.adicrate.block.ControllerBlock
+import dev.adirelle.adicrate.block.entity.ControllerBlockEntity
 import dev.adirelle.adicrate.utils.extensions.register
 import net.fabricmc.api.ClientModInitializer
 import net.fabricmc.api.EnvType.CLIENT
 import net.fabricmc.api.Environment
 import net.fabricmc.api.ModInitializer
-import net.fabricmc.fabric.api.client.rendering.v1.BlockEntityRendererRegistry
-import net.fabricmc.fabric.api.client.screenhandler.v1.ScreenRegistry
 import net.fabricmc.fabric.api.event.player.AttackBlockCallback
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings
-import net.fabricmc.fabric.api.screenhandler.v1.ScreenHandlerRegistry
 import net.fabricmc.fabric.api.transfer.v1.item.ItemStorage
 import net.minecraft.block.entity.BlockEntityType
 import net.minecraft.item.BlockItem
@@ -24,19 +18,17 @@ import net.minecraft.item.ItemGroup
 import net.minecraft.util.Identifier
 
 @Suppress("unused", "MemberVisibilityCanBePrivate")
-object Crate : ModInitializer, ClientModInitializer {
+object Controller : ModInitializer, ClientModInitializer {
 
     private val LOGGER = AdiCrate.LOGGER
 
-    val ID = Identifier(AdiCrate.MOD_ID, "crate")
+    val ID = Identifier(AdiCrate.MOD_ID, "controller")
 
-    val BLOCK = CrateBlock()
+    val BLOCK = ControllerBlock()
 
     val ITEM = BlockItem(BLOCK, FabricItemSettings().group(ItemGroup.INVENTORY))
 
-    val BLOCK_ENTITY_TYPE = BlockEntityType(::CrateBlockEntity, setOf(BLOCK), null)
-
-    val SCREEN_HANDLER_TYPE = ScreenHandlerRegistry.registerSimple(ID, ::CrateScreenHandler)
+    val BLOCK_ENTITY_TYPE = BlockEntityType(::ControllerBlockEntity, setOf(BLOCK), null)
 
     override fun onInitialize() {
         BLOCK.register(ID)
@@ -48,9 +40,6 @@ object Crate : ModInitializer, ClientModInitializer {
 
     @Environment(CLIENT)
     override fun onInitializeClient() {
-        BlockEntityRendererRegistry.register(BLOCK_ENTITY_TYPE, ::CrateRenderer)
-        ScreenRegistry.register(SCREEN_HANDLER_TYPE, ::CreateScreen)
-
         AttackBlockCallback.EVENT.register(BLOCK::onAttackedByPlayer)
     }
 }

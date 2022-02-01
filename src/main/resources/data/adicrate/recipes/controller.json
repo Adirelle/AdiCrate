@@ -1,0 +1,22 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "pattern": [
+        "PPP",
+        "HEH",
+        "PPP"
+    ],
+    "key": {
+        "P": {
+            "tag": "minecraft:planks"
+        },
+        "H": {
+            "item": "minecraft:hopper"
+        },
+        "E": {
+            "item": "minecraft:ender_pearl"
+        }
+    },
+    "result": {
+        "item": "adicrate:controller"
+    }
+}
