@@ -40,7 +40,21 @@ Crates can also be accessed by hoppers and any mod that supports the Fabric Tran
 
 ### Controller
 
-The controller should be placed next to existing crate and allows to access remotely all connected crates.
+The controller should be placed next to existing crates and allows to interact with all connected crates. The possible
+interactions (with the front side) are:
+
+* Left-click (attack) with an item in hand to extract a stack of said item,
+* Shift-left-click (sneak-attack) with an empty hand to restock all items in your inventory,
+* Right-click (use) with an item in hand to insert it into a crate that accepts it,
+* Shift-right-click (sneak-use) with an empty hand to insert all matching items from your inventory into the crates.
+
+The controller does not interact with unlocked, empty crates, so you cannot insert new items this way. When several
+crates contain/accept the same item, the controller will priorize them depending on the operation:
+
+* it will try to insert in crates with the highest amount of items first,
+* conversely, it will try to extract from the crates with the lowest amount of items first.
+
+The controller can also be accessed by hoppers and any mod that supports the Fabric Transfer API.
 
 ## License
 
