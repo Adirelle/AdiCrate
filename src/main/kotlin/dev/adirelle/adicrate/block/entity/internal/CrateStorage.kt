@@ -99,9 +99,9 @@ class CrateStorage(private val listener: Listener) :
     }
 
     fun accept(resource: ItemVariant) =
-        !resource.isBlank && (
+        !resource.isBlank && resource.item.maxCount > 1 && (
             resourceInternal.isBlank || (
-                resource.isOf(resourceInternal.`object`) && resource.nbtMatches(resourceInternal.nbt) && resource.item.maxCount > 1
+                resource.isOf(resourceInternal.`object`) && resource.nbtMatches(resourceInternal.nbt)
                 )
             )
 
