@@ -1,8 +1,9 @@
 package dev.adirelle.adicrate.block.entity.internal
 
+import dev.adirelle.adicrate.misc.Network
 import net.minecraft.screen.PropertyDelegate
 
-class PropertyDelegateAdapter(private val backing: CrateStorage) : PropertyDelegate {
+class PropertyDelegateAdapter(private val backing: Network.Storage) : PropertyDelegate {
 
     companion object {
 

@@ -15,10 +15,8 @@ import dev.adirelle.adicrate.utils.extensions.stackSize
 import dev.adirelle.adicrate.utils.logger
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext
-import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant
 import net.fabricmc.fabric.api.transfer.v1.item.PlayerInventoryStorage
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageUtil
-import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleSlotStorage
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction
 import net.fabricmc.fabric.api.util.NbtType
 import net.minecraft.block.BlockState
@@ -53,9 +51,9 @@ class CrateBlockEntity(pos: BlockPos, state: BlockState) :
 
     private val LOGGER by logger
 
-    private var _storage = CrateStorage(this)
+    private var internalStorage = CrateStorage(this)
 
-    override val storage: SingleSlotStorage<ItemVariant> by ::_storage
+    override val storage: Network.Storage by ::internalStorage
 
     val facing: Direction
         get() = cachedState.get(Properties.HORIZONTAL_FACING)
@@ -73,8 +71,8 @@ class CrateBlockEntity(pos: BlockPos, state: BlockState) :
         val newUpgrade = upgradeInventory.iterator().asSequence()
             .mapNotNull(Upgrade::of)
             .fold(Upgrade.EMPTY, Upgrade::plus)
-        if (newUpgrade != _storage.upgrade) {
-            _storage.upgrade = newUpgrade
+        if (newUpgrade != internalStorage.upgrade) {
+            internalStorage.upgrade = newUpgrade
             if (!onLoad) {
                 markDirty()
             }
@@ -109,13 +107,13 @@ class CrateBlockEntity(pos: BlockPos, state: BlockState) :
         BlockEntityUpdateS2CPacket.create(this)
 
     override fun readNbt(nbt: NbtCompound) {
-        _storage.readNbt(nbt)
+        internalStorage.readNbt(nbt)
         upgradeInventory.readNbtList(nbt.getList(UPGRADE_NBT_KEY, NbtType.COMPOUND))
         updateUpgrades(true)
     }
 
     override fun writeNbt(nbt: NbtCompound) {
-        _storage.writeNbt(nbt)
+        internalStorage.writeNbt(nbt)
         nbt[UPGRADE_NBT_KEY] = upgradeInventory.toNbtList()
     }
 
@@ -135,20 +133,20 @@ class CrateBlockEntity(pos: BlockPos, state: BlockState) :
     }
 
     override fun createMenu(syncId: Int, playerInventory: PlayerInventory, player: PlayerEntity): ScreenHandler =
-        CrateScreenHandler(syncId, playerInventory, _storage, upgradeInventory)
+        CrateScreenHandler(syncId, playerInventory, internalStorage, upgradeInventory)
 
     override fun getDisplayName() =
         TranslatableText("block.adicrate.crate")
 
     fun extractFor(player: PlayerEntity, fullStack: Boolean): Long =
-        if (_storage.isResourceBlank || _storage.amount == 0L)
+        if (internalStorage.isResourceBlank || internalStorage.amount == 0L)
             0L
         else
             Transaction.openOuter().use { tx ->
                 val playerStorage = PlayerInventoryStorage.of(player)
-                val resource = _storage.resource
+                val resource = internalStorage.resource
                 val amount = if (fullStack) resource.stackSize else 1L
-                val extracted = _storage.extract(resource, amount, tx)
+                val extracted = internalStorage.extract(resource, amount, tx)
                 LOGGER.info("extracting {} {} for player", extracted, resource.item.toString())
                 playerStorage.offerOrDrop(resource, extracted, tx)
                 tx.commit()

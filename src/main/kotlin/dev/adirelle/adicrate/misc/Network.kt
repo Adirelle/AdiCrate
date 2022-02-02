@@ -15,8 +15,8 @@ interface Network {
 
     interface Node {
 
-        val storage: SingleSlotStorage<ItemVariant>
-        
+        val storage: Storage
+
         fun getPos(): BlockPos
 
         fun connectTo(network: Network): Boolean
@@ -25,4 +25,11 @@ interface Network {
         fun disconnect()
     }
 
+    interface Storage : SingleSlotStorage<ItemVariant> {
+
+        val realCapacity: Long
+
+        fun canInsert(resource: ItemVariant): Boolean
+        fun canExtract(resource: ItemVariant): Boolean
+    }
 }

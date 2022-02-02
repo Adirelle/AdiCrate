@@ -105,24 +105,24 @@ class ControllerBlockEntity(pos: BlockPos, state: BlockState) :
 
         override fun insert(resource: ItemVariant, maxAmount: Long, tx: TransactionContext): Long {
             val views = nodes.map(Node::storage)
-                .filter { it.resource == resource && it.amount < it.capacity }
+                .filter { it.canInsert(resource) }
                 .sortedBy { it.capacity - it.amount }
             var inserted = 0L
             for (view in views) {
                 inserted += view.insert(resource, maxAmount - inserted, tx)
-                if (inserted == maxAmount) break
+                if (inserted >= maxAmount) break
             }
             return inserted
         }
 
         override fun extract(resource: ItemVariant, maxAmount: Long, tx: TransactionContext): Long {
             val views = nodes.map(Node::storage)
-                .filter { it.resource == resource && it.amount > 0 }
+                .filter { it.canExtract(resource) }
                 .sortedBy { it.amount }
             var extracted = 0L
             for (view in views) {
                 extracted += view.extract(resource, maxAmount - extracted, tx)
-                if (extracted == maxAmount) break
+                if (extracted >= maxAmount) break
             }
             return extracted
         }

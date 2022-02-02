@@ -2,13 +2,13 @@
 
 package dev.adirelle.adicrate.block.entity.internal
 
+import dev.adirelle.adicrate.misc.Network
 import dev.adirelle.adicrate.utils.extensions.set
 import dev.adirelle.adicrate.utils.extensions.stackSize
 import dev.adirelle.adicrate.utils.logger
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView
 import net.fabricmc.fabric.api.transfer.v1.storage.base.ResourceAmount
-import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleSlotStorage
 import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleViewIterator
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext
 import net.fabricmc.fabric.api.transfer.v1.transaction.base.SnapshotParticipant
@@ -20,7 +20,7 @@ import java.util.*
 import kotlin.math.min
 
 class CrateStorage(private val listener: Listener) :
-    SingleSlotStorage<ItemVariant>,
+    Network.Storage,
     SnapshotParticipant<ResourceAmount<ItemVariant>>() {
 
     private val LOGGER by logger
@@ -59,9 +59,14 @@ class CrateStorage(private val listener: Listener) :
 
     var upgrade = Upgrade()
         set(value) {
+            if (field == value) return
             field = value
             if (!field.lock && amountInternal == 0L && !resourceInternal.isBlank) {
                 resourceInternal = ItemVariant.blank()
+                listener.onContentUpdated()
+            }
+            if (field.void && isJammed()) {
+                amountInternal = realCapacity
                 listener.onContentUpdated()
             }
         }
@@ -69,19 +74,25 @@ class CrateStorage(private val listener: Listener) :
     private var resourceInternal: ItemVariant = ItemVariant.blank()
     private var amountInternal: Long = 0L
 
-    val realCapacity: Long
+    override val realCapacity: Long
         get() = resourceInternal.stackSize * (16 * (1 + upgrade.capacity))
-
-    private fun isOverflowed() = amountInternal > realCapacity
 
     override fun insert(resource: ItemVariant, maxAmount: Long, tx: TransactionContext) =
         when {
-            maxAmount <= 0    -> 0
-            isOverflowed()    -> 0
-            !accept(resource) -> 0
-            upgrade.void      -> insertOrDestroy(resource, maxAmount, tx)
-            else              -> insertAtMost(resource, maxAmount, tx)
+            maxAmount <= 0 || !canInsert(resource) -> 0
+            upgrade.void                           -> insertOrDestroy(resource, maxAmount, tx)
+            else                                   -> insertAtMost(resource, maxAmount, tx)
         }
+
+    override fun canInsert(resource: ItemVariant) =
+        !resource.isBlank && resource.item.maxCount > 1 && !isFull() && !isJammed() && resource.matches(
+            resourceInternal
+        )
+
+    private fun isFull() =
+        !upgrade.void && amountInternal >= realCapacity
+
+    private fun isJammed() = amountInternal > realCapacity
 
     private fun insertOrDestroy(resource: ItemVariant, maxAmount: Long, tx: TransactionContext): Long {
         insertAtMost(resource, maxAmount, tx)
@@ -98,16 +109,9 @@ class CrateStorage(private val listener: Listener) :
         return inserted
     }
 
-    fun accept(resource: ItemVariant) =
-        !resource.isBlank && resource.item.maxCount > 1 && (
-            resourceInternal.isBlank || (
-                resource.isOf(resourceInternal.`object`) && resource.nbtMatches(resourceInternal.nbt)
-                )
-            )
-
     override fun extract(resource: ItemVariant, maxAmount: Long, tx: TransactionContext): Long {
         val extracted = min(amountInternal, maxAmount)
-        if (resource.isBlank || resourceInternal.isBlank || resource != resourceInternal || extracted <= 0 || isOverflowed()) return 0L
+        if (!canExtract(resource) || extracted <= 0) return 0L
         updateSnapshots(tx)
         amountInternal -= extracted
         if (amountInternal == 0L && !upgrade.lock) {
@@ -115,6 +119,15 @@ class CrateStorage(private val listener: Listener) :
         }
         return extracted
     }
+
+    override fun canExtract(resource: ItemVariant) =
+        !resource.isBlank && !isEmpty() && !isJammed() && resourceInternal.matches(resource)
+
+    private fun isEmpty() =
+        amountInternal == 0L
+
+    fun ItemVariant.matches(other: ItemVariant) =
+        isOf(other.item) && nbtMatches(other.nbt)
 
     override fun iterator(tx: TransactionContext): MutableIterator<StorageView<ItemVariant>> =
         SingleViewIterator.create(this, tx)
@@ -153,9 +166,6 @@ class CrateStorage(private val listener: Listener) :
         nbt[AMOUNT_NBT_KEY] = amountInternal
         nbt[CAPACITY_NBT_KEY] = realCapacity // used for tooltip/display
     }
-
-    fun toText(): Text =
-        contentText(amountInternal, realCapacity)
 
     fun interface Listener {
 
