@@ -4,6 +4,9 @@
 
 ### Added
 
+* the Crate
+* the Controller
+
 ### Changed
 
 ### Deprecated
