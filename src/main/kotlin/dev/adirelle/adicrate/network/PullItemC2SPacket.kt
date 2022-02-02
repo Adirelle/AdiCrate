@@ -14,14 +14,13 @@ import net.minecraft.network.PacketByteBuf
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.network.ServerPlayNetworkHandler
 import net.minecraft.server.network.ServerPlayerEntity
-import net.minecraft.util.Identifier
 import net.minecraft.util.math.BlockPos
 
 object PullItemC2SPacket : ServerPlayNetworking.PlayChannelHandler {
 
     private val LOGGER by logger
 
-    private val ID = Identifier(AdiCrate.MOD_ID, "pull_items")
+    private val ID = AdiCrate.id("pull_items")
 
     fun registerReceiver() {
         ServerPlayNetworking.registerGlobalReceiver(ID, this)

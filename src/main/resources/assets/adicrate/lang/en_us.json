@@ -1,7 +1,16 @@
 {
     "block.adicrate.crate": "Crate",
+    "block.adicrate.controller": "Crate controller",
     "item.adicrate.crate": "Crate",
-    "gui.adicrate.crate.tooltip.input": "Input",
-    "gui.adicrate.crate.tooltip.output": "Output",
-    "gui.adicrate.crate.tooltip.upgrades": "Upgrades"
+    "item.adicrate.controller": "Crate controller",
+    "tooltip.adicrate.crate.input": "Input§nDrop items there",
+    "tooltip.adicrate.crate.output": "Output§nExtract items from there",
+    "tooltip.adicrate.crate.upgrades": "Upgrades§nInsert items to upgrade the crate",
+    "tooltip.adicrate.crate.jammed": "This crate is jammed",
+    "tooltip.adicrate.crate.interact.push_item": "[%s] to insert item",
+    "tooltip.adicrate.crate.interact.pull_item": "[%s] to extract item",
+    "tooltip.adicrate.crate.interact.push_inventory": "[%s-%s] to insert items from your inventory",
+    "tooltip.adicrate.crate.interact.restock_inventory": "[%s-%s] to restock stacks in your inventory",
+    "config.waila.adicrate": "AdiCrate",
+    "config.waila.adicrate.show_interaction_hints": "Show interaction hints"
 }

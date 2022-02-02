@@ -15,14 +15,13 @@ import net.fabricmc.fabric.api.transfer.v1.item.ItemStorage
 import net.minecraft.block.entity.BlockEntityType
 import net.minecraft.item.BlockItem
 import net.minecraft.item.ItemGroup
-import net.minecraft.util.Identifier
 
 @Suppress("unused", "MemberVisibilityCanBePrivate")
 object Controller : ModInitializer, ClientModInitializer {
 
     private val LOGGER = AdiCrate.LOGGER
 
-    val ID = Identifier(AdiCrate.MOD_ID, "controller")
+    val ID = AdiCrate.id("controller")
 
     val BLOCK = ControllerBlock()
 

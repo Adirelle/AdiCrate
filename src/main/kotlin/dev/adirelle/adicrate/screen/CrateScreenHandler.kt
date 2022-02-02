@@ -16,6 +16,8 @@ import io.github.cottonmc.cotton.gui.widget.WItemSlot
 import io.github.cottonmc.cotton.gui.widget.WText
 import io.github.cottonmc.cotton.gui.widget.data.HorizontalAlignment.CENTER
 import io.github.cottonmc.cotton.gui.widget.data.VerticalAlignment
+import net.fabricmc.api.EnvType.CLIENT
+import net.fabricmc.api.Environment
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant
 import net.fabricmc.fabric.api.transfer.v1.item.PlayerInventoryStorage
 import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleSlotStorage
@@ -87,8 +89,9 @@ class CrateScreenHandler private constructor(
             ?: throw IllegalStateException("unsupported panel class: ${rootPanel::class.java.name}")
 
         val inputSlot = object : WItemSlot(blockInventory, INPUT_SLOT, 1, 1, false) {
+            @Environment(CLIENT)
             override fun addTooltip(tooltip: TooltipBuilder) {
-                tooltip.add(TranslatableText("gui.adicrate.crate.tooltip.input"))
+                tooltip.add(TranslatableText("tooltip.adicrate.crate.input"))
             }
         }
         inputSlot.isTakingAllowed = false
@@ -96,8 +99,9 @@ class CrateScreenHandler private constructor(
         root.add(inputSlot, 3, 1)
 
         val outputSlot = object : WItemSlot(blockInventory, OUTPUT_SLOT, 1, 1, false) {
+            @Environment(CLIENT)
             override fun addTooltip(tooltip: TooltipBuilder) {
-                tooltip.add(TranslatableText("gui.adicrate.crate.tooltip.output"))
+                tooltip.add(TranslatableText("tooltip.adicrate.crate.output"))
             }
         }
         outputSlot.filter = Predicate { contentInventory.canExtract(OUTPUT_SLOT, it, NORTH) }
@@ -111,8 +115,9 @@ class CrateScreenHandler private constructor(
         root.add(contentText, 0, 2, 9, 1)
 
         val upgradeSlots = object : WItemSlot(upgradeInventory, 0, upgradeInventory.size(), 1, false) {
+            @Environment(CLIENT)
             override fun addTooltip(tooltip: TooltipBuilder) {
-                tooltip.add(TranslatableText("gui.adicrate.crate.tooltip.upgrades"))
+                tooltip.add(TranslatableText("tooltip.adicrate.crate.upgrades"))
             }
         }
         upgradeSlots.filter = Predicate { upgradeInventory.isValid(0, it) }

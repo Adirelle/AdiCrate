@@ -36,5 +36,18 @@
         "fabric-language-kotlin": "~${fabricKotlinVersion}",
         "libgui": "~${libGuiVersion}",
         "java": ">=17"
+    },
+    "recommends": {
+        "rei": "*",
+        "wthit": ">=${wthitVersion}"
+    },
+    "suggests": {
+        "slotlink": "*"
+    },
+    "custom": {
+        "waila:plugins": {
+            "id": "adicrate:waila",
+            "initializer": "dev.adirelle.adicrate.bridge.waila.WailaPlugin"
+        }
     }
 }

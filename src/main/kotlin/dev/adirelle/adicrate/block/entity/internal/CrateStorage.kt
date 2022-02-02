@@ -85,14 +85,16 @@ class CrateStorage(private val listener: Listener) :
         }
 
     override fun canInsert(resource: ItemVariant) =
-        !resource.isBlank && resource.item.maxCount > 1 && !isFull() && !isJammed() && resource.matches(
-            resourceInternal
-        )
+        !resource.isBlank && resource.item.maxCount > 1 && canInsert() &&
+            (resourceInternal.isBlank || resource.matches(resourceInternal))
+
+    private fun canInsert() =
+        !isFull() && !isJammed()
 
     private fun isFull() =
         !upgrade.void && amountInternal >= realCapacity
 
-    private fun isJammed() = amountInternal > realCapacity
+    override fun isJammed() = amountInternal > realCapacity
 
     private fun insertOrDestroy(resource: ItemVariant, maxAmount: Long, tx: TransactionContext): Long {
         insertAtMost(resource, maxAmount, tx)
@@ -121,12 +123,15 @@ class CrateStorage(private val listener: Listener) :
     }
 
     override fun canExtract(resource: ItemVariant) =
-        !resource.isBlank && !isEmpty() && !isJammed() && resourceInternal.matches(resource)
+        !resource.isBlank && canExtract() && resourceInternal.matches(resource)
+
+    private fun canExtract() =
+        !resourceInternal.isBlank && !isEmpty() && !isJammed()
 
     private fun isEmpty() =
         amountInternal == 0L
 
-    fun ItemVariant.matches(other: ItemVariant) =
+    private fun ItemVariant.matches(other: ItemVariant) =
         isOf(other.item) && nbtMatches(other.nbt)
 
     override fun iterator(tx: TransactionContext): MutableIterator<StorageView<ItemVariant>> =

@@ -31,5 +31,7 @@ interface Network {
 
         fun canInsert(resource: ItemVariant): Boolean
         fun canExtract(resource: ItemVariant): Boolean
+
+        fun isJammed(): Boolean
     }
 }

@@ -53,6 +53,8 @@ class CrateBlockEntity(pos: BlockPos, state: BlockState) :
 
     private var internalStorage = CrateStorage(this)
 
+    private var network: Network? = null
+
     override val storage: Network.Storage by ::internalStorage
 
     val facing: Direction
@@ -78,8 +80,6 @@ class CrateBlockEntity(pos: BlockPos, state: BlockState) :
             }
         }
     }
-
-    private var network: Network? = null
 
     override fun connectTo(network: Network): Boolean {
         if (network === this.network) return false

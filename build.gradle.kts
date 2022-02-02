@@ -45,6 +45,11 @@ repositories {
         url = uri("https://server.bbkr.space/artifactory/libs-release")
     }
 
+    maven {
+        name = "BadAsIntended"
+        url = uri("https://maven.bai.lol")
+    }
+
     dependencies {
         minecraft("com.mojang:minecraft:${minecraftVersion}")
 
@@ -65,6 +70,10 @@ repositories {
         val libGuiVersion: String by project
         modImplementation("io.github.cottonmc:LibGui:$libGuiVersion")
         include("io.github.cottonmc:LibGui:$libGuiVersion")
+
+        val wthitVersion: String by project
+        modCompileOnly("mcp.mobius.waila:wthit-api:fabric-$wthitVersion")
+        modRuntimeOnly("mcp.mobius.waila:wthit:fabric-$wthitVersion")
     }
 }
 
@@ -142,7 +151,8 @@ tasks {
                     prop("loaderVersion"),
                     prop("fabricVersion"),
                     prop("fabricKotlinVersion"),
-                    prop("libGuiVersion")
+                    prop("libGuiVersion"),
+                    prop("wthitVersion")
                 )
             )
         }

@@ -79,6 +79,9 @@ operator fun NbtCompound.set(key: String, value: String) =
 operator fun NbtCompound.set(key: String, value: Int) =
     set(key, value, NbtCompound::putInt, 0::equals)
 
+operator fun NbtCompound.set(key: String, value: Boolean) =
+    set(key, value, NbtCompound::putBoolean, false::equals)
+
 operator fun NbtCompound.set(key: String, value: Item) =
     set(key, value, NbtCompound::putItem, Items.AIR::equals)
 
