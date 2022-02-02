@@ -50,10 +50,10 @@ interactions (with the front side) are:
 * Shift-right-click (sneak-use) with an empty hand to insert all matching items from your inventory into the crates.
 
 The controller does not interact with unlocked, empty crates, so you cannot insert new items this way. When several
-crates contain/accept the same item, the controller will priorize them depending on the operation:
+crates contain/accept the same item, the controller will prioritize them depending on the operation:
 
-* it will try to insert in crates with the highest amount of items first,
-* conversely, it will try to extract from the crates with the lowest amount of items first.
+* when inserting, it starts with the non-full crate with the highest number of items,
+* when extracting, it starts wutg the crate with the lowest number of items.
 
 The controller can also be accessed by hoppers and any mod that supports the Fabric Transfer API.
 
