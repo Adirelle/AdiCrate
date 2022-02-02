@@ -1,6 +1,5 @@
 package dev.adirelle.adicrate.utils.extensions
 
-import dev.adirelle.adicrate.utils.NbtSerializable
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant
 import net.minecraft.item.Item
 import net.minecraft.item.ItemConvertible
@@ -31,11 +30,6 @@ fun NbtString.toItem(): Optional<Item> =
     toIdentifier()
         .map(Identifier::toItem)
         .filter(Item::isNotEmpty)
-
-// Serializable
-
-fun NbtSerializable.toNbt(): NbtCompound =
-    NbtCompound().also(::writeToNbt)
 
 // Compound
 
@@ -101,9 +95,6 @@ operator fun NbtCompound.set(key: String, value: NbtCompound) =
 operator fun NbtCompound.set(key: String, value: NbtList) =
     set(key, value, { k, v -> put(k, v) }, NbtList::isEmpty)
 
-operator fun NbtCompound.set(key: String, value: NbtSerializable) =
-    set(key, value.toNbt())
-
 inline operator fun NbtCompound.set(key: String, builder: (NbtCompound) -> Unit) {
     val nbt = NbtCompound().also(builder)
     if (!nbt.isEmpty) {
@@ -130,14 +121,6 @@ inline fun <reified T : NbtElement> NbtCompound.read(key: String, reader: (T) ->
     }
 }
 
-fun NbtCompound.readInto(key: String, target: NbtSerializable): Boolean =
-    getTyped<NbtCompound>(key)
-        .map {
-            target.readFromNbt(it)
-            true
-        }
-        .orElse(false)
-
 @JvmName("readCompound")
 inline fun NbtCompound.read(key: String, reader: (NbtCompound) -> Unit) {
     read<NbtCompound>(key) { if (!it.isEmpty) reader(it) }
@@ -156,7 +139,6 @@ fun NbtList.add(value: String) = add(NbtString.of(value))
 fun NbtList.add(id: Identifier) = add(id.toNbt())
 fun NbtList.add(item: Item) = add(item.toNbt())
 fun NbtList.add(stack: ItemStack) = add(stack.toNbt())
-fun NbtList.add(value: NbtSerializable) = add(value.toNbt())
 
 inline fun <reified T : NbtElement> NbtList.getTyped(index: Int): Optional<T> =
     Optional.of(index)
@@ -168,12 +150,6 @@ fun NbtList.getItem(index: Int): Optional<Item> =
 
 fun NbtList.getStack(index: Int): ItemStack =
     getItem(index).map(::ItemStack).orElse(ItemStack.EMPTY)
-
-fun NbtList.readInto(index: Int, target: NbtSerializable): Boolean =
-    getTyped<NbtCompound>(index).map {
-        target.readFromNbt(it)
-        true
-    }.orElse(false)
 
 inline fun <reified T : NbtElement, R> NbtList.read(index: Int, crossinline read: (T) -> R): Optional<R> =
     getTyped<T>(index).map { read(it) }
