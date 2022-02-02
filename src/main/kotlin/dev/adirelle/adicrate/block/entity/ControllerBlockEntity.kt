@@ -121,7 +121,7 @@ class ControllerBlockEntity(pos: BlockPos, state: BlockState) :
                 .sortedBy { it.amount }
             var extracted = 0L
             for (view in views) {
-                extracted += view.insert(resource, maxAmount - extracted, tx)
+                extracted += view.extract(resource, maxAmount - extracted, tx)
                 if (extracted == maxAmount) break
             }
             return extracted
