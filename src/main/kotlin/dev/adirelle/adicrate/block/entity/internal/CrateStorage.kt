@@ -58,6 +58,13 @@ class CrateStorage(private val listener: Listener) :
     }
 
     var upgrade = Upgrade()
+        set(value) {
+            field = value
+            if (!field.lock && amountInternal == 0L && !resourceInternal.isBlank) {
+                resourceInternal = ItemVariant.blank()
+                listener.onContentUpdated()
+            }
+        }
 
     private var resourceInternal: ItemVariant = ItemVariant.blank()
     private var amountInternal: Long = 0L
