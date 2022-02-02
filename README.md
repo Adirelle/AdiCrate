@@ -11,7 +11,8 @@ or [Roughly Enough Items](https://www.curseforge.com/minecraft/mc-mods/roughly-e
 
 ### Crate
 
-A crate can hold several stacks, 16 by default, of a single item. When broken, the crate retains its content.
+A crate can hold several stacks, 16 by default, of a single, stackable item. When broken, the crate retains its content
+so you can move it easily.
 
 You can interact directly with the front of the crate (the face showing the item and its count):
 
