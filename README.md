@@ -11,8 +11,8 @@ or [Roughly Enough Items](https://www.curseforge.com/minecraft/mc-mods/roughly-e
 
 ### Crate
 
-A crate can hold several stacks, 16 by default, of a single, stackable item. When broken, the crate retains its content
-so you can move it easily.
+A crate can hold several stacks, 32 by default, of a single item. When broken, the crate retains its content so you can
+move it easily.
 
 You can interact directly with the front of the crate (the face showing the item and its count):
 
@@ -27,9 +27,9 @@ one item, and you can insert several upgrade of the same type (e.g. 5 iron ingot
 
 Possible upgrades are:
 
-* An iron ingot to increase the maximum capacity by 16 stacks.
-* A diamond to increase the maximum capacity by 32 stacks.
-* A netherite ingot to increase the maximum capacity by 48 stacks.
+* An iron ingot to increase the maximum capacity by 8 stacks.
+* A diamond to increase the maximum capacity by 16 stacks.
+* A netherite ingot to increase the maximum capacity by 32 stacks.
 * A cobweb to lock the crate to the contained item, i.e. if the crate is emptied, it remembers the item and will not
   accept other items.
 * A bucket of lava to have the crate accepts more items than its maximum capacity but destroy overflow items.

@@ -17,7 +17,7 @@ data class Upgrade(
             Items.COBWEB to Upgrade(lock = true),
             Items.IRON_INGOT to Upgrade(capacity = 1),
             Items.DIAMOND to Upgrade(capacity = 2),
-            Items.NETHERITE_INGOT to Upgrade(capacity = 3)
+            Items.NETHERITE_INGOT to Upgrade(capacity = 4)
         )
 
         val EMPTY = Upgrade()

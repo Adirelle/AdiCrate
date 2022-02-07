@@ -75,7 +75,7 @@ class CrateStorage(private val listener: Listener) :
     private var amountInternal: Long = 0L
 
     override val realCapacity: Long
-        get() = resourceInternal.stackSize * (16 * (1 + upgrade.capacity))
+        get() = resourceInternal.stackSize * (8 * (4 + upgrade.capacity))
 
     override fun insert(resource: ItemVariant, maxAmount: Long, tx: TransactionContext) =
         when {
