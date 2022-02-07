@@ -2,7 +2,7 @@
 
 package dev.adirelle.adicrate.block.entity.internal
 
-import dev.adirelle.adicrate.misc.Network
+import dev.adirelle.adicrate.abstraction.Network
 import dev.adirelle.adicrate.utils.extensions.set
 import dev.adirelle.adicrate.utils.extensions.stackSize
 import dev.adirelle.adicrate.utils.logger

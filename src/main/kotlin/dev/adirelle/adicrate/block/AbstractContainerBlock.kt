@@ -1,5 +1,6 @@
 package dev.adirelle.adicrate.block
 
+import dev.adirelle.adicrate.abstraction.FaceInteractionHandler
 import dev.adirelle.adicrate.network.PullItemC2SPacket
 import net.fabricmc.api.EnvType.CLIENT
 import net.fabricmc.api.Environment
@@ -10,7 +11,7 @@ import net.minecraft.block.BlockWithEntity
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.item.ItemPlacementContext
 import net.minecraft.state.StateManager.Builder
-import net.minecraft.state.property.Properties
+import net.minecraft.state.property.Properties.HORIZONTAL_FACING
 import net.minecraft.util.ActionResult
 import net.minecraft.util.ActionResult.*
 import net.minecraft.util.BlockMirror
@@ -25,22 +26,22 @@ import net.minecraft.world.World
 abstract class AbstractContainerBlock(settings: Settings) : BlockWithEntity(settings), ModBlock {
 
     init {
-        defaultState = stateManager.defaultState.with(Properties.HORIZONTAL_FACING, NORTH)
+        defaultState = stateManager.defaultState.with(HORIZONTAL_FACING, NORTH)
     }
 
     override fun appendProperties(builder: Builder<Block, BlockState>) {
-        builder.add(Properties.HORIZONTAL_FACING)
+        builder.add(HORIZONTAL_FACING)
     }
 
     override fun rotate(state: BlockState, rotation: BlockRotation): BlockState =
-        state.with(Properties.HORIZONTAL_FACING, rotation.rotate(state.get(Properties.HORIZONTAL_FACING)))
+        state.with(HORIZONTAL_FACING, rotation.rotate(state.get(HORIZONTAL_FACING)))
 
     override fun mirror(state: BlockState, mirror: BlockMirror): BlockState =
-        state.rotate(mirror.getRotation(state.get(Properties.HORIZONTAL_FACING)))
+        state.rotate(mirror.getRotation(state.get(HORIZONTAL_FACING)))
 
     override fun getPlacementState(ctx: ItemPlacementContext): BlockState =
         defaultState.with(
-            Properties.HORIZONTAL_FACING,
+            HORIZONTAL_FACING,
             ctx.placementDirections.first(Direction.Type.HORIZONTAL::test).opposite
         )
 
@@ -56,7 +57,7 @@ abstract class AbstractContainerBlock(settings: Settings) : BlockWithEntity(sett
         direction: Direction
     ): ActionResult =
         world.getBlockState(pos).let { state ->
-            if (state.isOf(this) && direction == state.get(Properties.HORIZONTAL_FACING)) {
+            if (state.isOf(this) && direction == state.get(HORIZONTAL_FACING)) {
                 if (!player.handSwinging) {
                     PullItemC2SPacket.send(player, pos)
                     player.swingHand(hand)
@@ -77,10 +78,18 @@ abstract class AbstractContainerBlock(settings: Settings) : BlockWithEntity(sett
         hit: BlockHitResult
     ): ActionResult =
         when {
-            !state.isOf(this)                                   -> PASS
-            world.isClient                                      -> SUCCESS
-            hit.side == state.get(Properties.HORIZONTAL_FACING) -> pushItems(world, pos, player, hand)
-            else                                                -> onUseInternal(world, pos, player)
+            !state.isOf(this)                        ->
+                PASS
+            hit.side == state.get(HORIZONTAL_FACING) -> {
+                if (!world.isClient) {
+                    (world.getBlockEntity(pos) as? FaceInteractionHandler)
+                        ?.pushItems(player, hand)
+                        ?: throw IllegalStateException("block at $pos should implement ${FaceInteractionHandler::class.qualifiedName}")
+                }
+                SUCCESS
+            }
+            else                                     ->
+                onUseInternal(world, pos, player)
         }
 
     override fun onStateReplaced(
@@ -98,11 +107,8 @@ abstract class AbstractContainerBlock(settings: Settings) : BlockWithEntity(sett
         super.onStateReplaced(state, world, pos, newState, moved)
     }
 
-    internal abstract fun pullItems(world: World, pos: BlockPos, player: PlayerEntity)
-
-    protected abstract fun pushItems(world: World, pos: BlockPos, player: PlayerEntity, hand: Hand): ActionResult
-
-    protected abstract fun onUseInternal(world: World, pos: BlockPos, player: PlayerEntity): ActionResult
+    protected open fun onUseInternal(world: World, pos: BlockPos, player: PlayerEntity): ActionResult =
+        PASS
 
     protected abstract fun onRemoved(world: World, pos: BlockPos)
 }

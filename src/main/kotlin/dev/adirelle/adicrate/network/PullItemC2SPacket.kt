@@ -1,7 +1,7 @@
 package dev.adirelle.adicrate.network
 
 import dev.adirelle.adicrate.AdiCrate
-import dev.adirelle.adicrate.block.AbstractContainerBlock
+import dev.adirelle.adicrate.abstraction.FaceInteractionHandler
 import dev.adirelle.adicrate.utils.logger
 import net.fabricmc.api.EnvType.CLIENT
 import net.fabricmc.api.Environment
@@ -49,13 +49,13 @@ object PullItemC2SPacket : ServerPlayNetworking.PlayChannelHandler {
             return
         }
         val pos = buf.readBlockPos()
-        val block = world.getBlockState(pos).block
-        if (block !is AbstractContainerBlock) {
+        val blockEntity = world.getBlockEntity(pos)
+        if (blockEntity !is FaceInteractionHandler) {
             LOGGER.warn("ignoring packet for wrong block")
             return
         }
         server.execute {
-            block.pullItems(world, pos, player)
+            blockEntity.pullItems(player)
         }
     }
 }

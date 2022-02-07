@@ -3,11 +3,13 @@
 package dev.adirelle.adicrate.block.entity
 
 import dev.adirelle.adicrate.Crate
+import dev.adirelle.adicrate.abstraction.FaceInteractionHandler
+import dev.adirelle.adicrate.abstraction.Network
+import dev.adirelle.adicrate.abstraction.Network.Info
+import dev.adirelle.adicrate.abstraction.Network.Node
 import dev.adirelle.adicrate.block.entity.internal.CrateStorage
 import dev.adirelle.adicrate.block.entity.internal.Upgrade
 import dev.adirelle.adicrate.block.entity.internal.UpgradeInventory
-import dev.adirelle.adicrate.misc.Network
-import dev.adirelle.adicrate.misc.Network.Node
 import dev.adirelle.adicrate.screen.CrateScreenHandler
 import dev.adirelle.adicrate.utils.extensions.iterator
 import dev.adirelle.adicrate.utils.extensions.set
@@ -15,8 +17,11 @@ import dev.adirelle.adicrate.utils.extensions.stackSize
 import dev.adirelle.adicrate.utils.logger
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant
 import net.fabricmc.fabric.api.transfer.v1.item.PlayerInventoryStorage
+import net.fabricmc.fabric.api.transfer.v1.storage.Storage
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageUtil
+import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleSlotStorage
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction
 import net.fabricmc.fabric.api.util.NbtType
 import net.minecraft.block.BlockState
@@ -40,7 +45,8 @@ class CrateBlockEntity(pos: BlockPos, state: BlockState) :
     BlockEntity(Crate.BLOCK_ENTITY_TYPE, pos, state),
     NamedScreenHandlerFactory,
     CrateStorage.Listener,
-    Node {
+    Node,
+    FaceInteractionHandler {
 
     companion object {
 
@@ -54,6 +60,9 @@ class CrateBlockEntity(pos: BlockPos, state: BlockState) :
     private var internalStorage = CrateStorage(this)
 
     private var network: Network? = null
+
+    override val networkInfo: Info?
+        get() = network?.info
 
     override val storage: Network.Storage by ::internalStorage
 
@@ -138,46 +147,35 @@ class CrateBlockEntity(pos: BlockPos, state: BlockState) :
     override fun getDisplayName() =
         TranslatableText("block.adicrate.crate")
 
-    fun extractFor(player: PlayerEntity, fullStack: Boolean): Long =
-        if (internalStorage.isResourceBlank || internalStorage.amount == 0L)
-            0L
-        else
-            Transaction.openOuter().use { tx ->
-                val playerStorage = PlayerInventoryStorage.of(player)
-                val resource = internalStorage.resource
-                val amount = if (fullStack) resource.stackSize else 1L
-                val extracted = internalStorage.extract(resource, amount, tx)
-                LOGGER.info("extracting {} {} for player", extracted, resource.item.toString())
-                playerStorage.offerOrDrop(resource, extracted, tx)
-                tx.commit()
-                extracted
-            }
-
-    fun insertFrom(player: PlayerEntity, hand: Hand): Long =
-        when {
-            !player.getStackInHand(hand).isEmpty -> insertHandfulFrom(player, hand)
-            storage.isResourceBlank              -> 0L
-            player.isSneaking                    -> insertAllFrom(player)
-            else                                 -> 0L
+    override fun pullItems(player: PlayerEntity) {
+        if (internalStorage.isResourceBlank || internalStorage.amount == 0L) return
+        Transaction.openOuter().use { tx ->
+            val playerStorage = PlayerInventoryStorage.of(player)
+            val resource = internalStorage.resource
+            val amount = if (!player.isSneaking) resource.stackSize else 1L
+            val extracted = internalStorage.extract(resource, amount, tx)
+            LOGGER.debug("extracting {} {} for player", extracted, resource.item.toString())
+            playerStorage.offerOrDrop(resource, extracted, tx)
+            tx.commit()
         }
+    }
 
-    private fun insertHandfulFrom(player: PlayerEntity, hand: Hand): Long =
-        ContainerItemContext.ofPlayerHand(player, hand).mainSlot.let { playerHand ->
-            val moved = StorageUtil.move(playerHand, storage, { true }, playerHand.amount, null)
-            LOGGER.info("moved {} {} from player hand", moved, storage.resource.item.toString())
-            moved
+    override fun pushItems(player: PlayerEntity, hand: Hand) {
+        if (player.isSneaking) {
+            insertAllFromInventory(PlayerInventoryStorage.of(player))
+        } else {
+            insertFromSlot(ContainerItemContext.ofPlayerHand(player, hand).mainSlot)
         }
+    }
 
-    private fun insertAllFrom(player: PlayerEntity): Long {
-        val playerInventory = PlayerInventoryStorage.of(player)
-        val moved = StorageUtil.move(
-            playerInventory,
-            storage,
-            { it == storage.resource },
-            storage.capacity - storage.amount,
-            null
-        )
+    private fun insertFromSlot(slot: SingleSlotStorage<ItemVariant>) {
+        val moved = StorageUtil.move(slot, storage, { true }, slot.amount, null)
+        LOGGER.debug("moved {} {} from player hand", moved, storage.resource.item.toString())
+    }
+
+    private fun insertAllFromInventory(inventory: Storage<ItemVariant>) {
+        val maxAmount = storage.capacity - storage.amount
+        val moved = StorageUtil.move(inventory, storage, { it == storage.resource }, maxAmount, null)
         LOGGER.info("moved {} {} from player inventory", moved, storage.resource.item.toString())
-        return moved
     }
 }

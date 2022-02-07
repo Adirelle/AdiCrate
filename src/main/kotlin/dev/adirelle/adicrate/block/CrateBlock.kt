@@ -3,10 +3,10 @@
 package dev.adirelle.adicrate.block
 
 import dev.adirelle.adicrate.Crate
+import dev.adirelle.adicrate.abstraction.Network
+import dev.adirelle.adicrate.abstraction.Network.Node
 import dev.adirelle.adicrate.block.entity.CrateBlockEntity
 import dev.adirelle.adicrate.block.entity.internal.CrateStorage
-import dev.adirelle.adicrate.misc.Network
-import dev.adirelle.adicrate.misc.Network.Node
 import dev.adirelle.adicrate.utils.extensions.withBlockEntity
 import net.fabricmc.fabric.api.`object`.builder.v1.block.FabricBlockSettings
 import net.minecraft.block.BlockState
@@ -23,7 +23,6 @@ import net.minecraft.loot.context.LootContextParameters
 import net.minecraft.text.Text
 import net.minecraft.util.ActionResult
 import net.minecraft.util.ActionResult.SUCCESS
-import net.minecraft.util.Hand
 import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.Direction
 import net.minecraft.world.BlockView
@@ -56,19 +55,6 @@ class CrateBlock :
         val nbt = BlockItem.getBlockEntityNbt(stack) ?: return
         CrateStorage.itemText(nbt).ifPresent(tooltip::add)
         tooltip.add(CrateStorage.contentText(nbt))
-    }
-
-    override fun pullItems(world: World, pos: BlockPos, player: PlayerEntity) {
-        world.withBlockEntity(pos, Crate.BLOCK_ENTITY_TYPE) {
-            it.extractFor(player, !player.isSneaking)
-        }
-    }
-
-    override fun pushItems(world: World, pos: BlockPos, player: PlayerEntity, hand: Hand): ActionResult {
-        world.withBlockEntity(pos, Crate.BLOCK_ENTITY_TYPE) {
-            it.insertFrom(player, hand)
-        }
-        return SUCCESS
     }
 
     override fun onUseInternal(world: World, pos: BlockPos, player: PlayerEntity): ActionResult {

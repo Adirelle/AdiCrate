@@ -1,6 +1,6 @@
 package dev.adirelle.adicrate.block.entity.internal
 
-import dev.adirelle.adicrate.misc.Network
+import dev.adirelle.adicrate.abstraction.Network
 import net.minecraft.screen.PropertyDelegate
 
 class PropertyDelegateAdapter(private val backing: Network.Storage) : PropertyDelegate {

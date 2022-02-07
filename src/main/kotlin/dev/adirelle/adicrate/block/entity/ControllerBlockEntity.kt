@@ -4,22 +4,32 @@ package dev.adirelle.adicrate.block.entity
 
 import dev.adirelle.adicrate.Controller
 import dev.adirelle.adicrate.Crate
-import dev.adirelle.adicrate.misc.Network
-import dev.adirelle.adicrate.misc.Network.Node
+import dev.adirelle.adicrate.abstraction.FaceInteractionHandler
+import dev.adirelle.adicrate.abstraction.Network
+import dev.adirelle.adicrate.abstraction.Network.Info
+import dev.adirelle.adicrate.abstraction.Network.Node
 import dev.adirelle.adicrate.utils.logger
+import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant
+import net.fabricmc.fabric.api.transfer.v1.item.PlayerInventoryStorage
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage
+import net.fabricmc.fabric.api.transfer.v1.storage.StorageUtil
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView
+import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleSlotStorage
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext
 import net.minecraft.block.BlockState
 import net.minecraft.block.entity.BlockEntity
+import net.minecraft.entity.player.PlayerEntity
+import net.minecraft.util.Hand
 import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.Direction
 import net.minecraft.world.World
 
 class ControllerBlockEntity(pos: BlockPos, state: BlockState) :
     BlockEntity(Controller.BLOCK_ENTITY_TYPE, pos, state),
-    Network {
+    Network,
+    Info,
+    FaceInteractionHandler {
 
     private val LOGGER by logger
 
@@ -27,19 +37,25 @@ class ControllerBlockEntity(pos: BlockPos, state: BlockState) :
 
     val storage: Storage<ItemVariant> = StorageAdapter()
 
+    override val info: Info
+        get() = this
+
+    override val name: String
+        get() = pos.toShortString()
+
     private var dirty = true
     private var destroyed = false
 
     override fun add(node: Node) {
         if (!destroyed && nodes.add(node)) {
-            LOGGER.info("added ${node.getPos()}")
+            LOGGER.debug("added ${node.getPos()}")
             dirty = true
         }
     }
 
     override fun remove(node: Node) {
         if (!destroyed && nodes.remove(node)) {
-            LOGGER.info("removed ${node.getPos()}")
+            LOGGER.debug("removed ${node.getPos()}")
             dirty = true
         }
     }
@@ -64,6 +80,26 @@ class ControllerBlockEntity(pos: BlockPos, state: BlockState) :
         visitor.unvisited.values.forEach(Node::disconnect)
 
         LOGGER.debug("nodes: ${nodes.map(Node::getPos).joinToString()}")
+    }
+
+    override fun pullItems(player: PlayerEntity) {
+        if (player.isSneaking) {
+            PlayerInventoryStorage.of(player).slots.forEach(::restock)
+        } else {
+            restock(ContainerItemContext.ofPlayerHand(player, player.preferredHand).mainSlot)
+        }
+    }
+
+    private fun restock(slot: SingleSlotStorage<ItemVariant>) {
+        if (slot.isResourceBlank || slot.amount >= slot.capacity) return
+        StorageUtil.move(storage, slot, { it == slot.resource }, slot.capacity - slot.amount, null)
+    }
+
+    override fun pushItems(player: PlayerEntity, hand: Hand) {
+        val source =
+            if (player.isSneaking) PlayerInventoryStorage.of(player)
+            else ContainerItemContext.ofPlayerHand(player, player.preferredHand).mainSlot
+        StorageUtil.move(source, storage, { true }, Long.MAX_VALUE, null)
     }
 
     private inner class NetworkVisitor(private val world: World) {
