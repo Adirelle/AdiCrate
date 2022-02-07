@@ -5,7 +5,7 @@ package dev.adirelle.adicrate
 import dev.adirelle.adicrate.block.CrateBlock
 import dev.adirelle.adicrate.block.entity.CrateBlockEntity
 import dev.adirelle.adicrate.client.renderer.CrateRenderer
-import dev.adirelle.adicrate.client.screen.CreateScreen
+import dev.adirelle.adicrate.client.screen.CrateScreen
 import dev.adirelle.adicrate.screen.CrateScreenHandler
 import dev.adirelle.adicrate.utils.extensions.register
 import net.fabricmc.api.ClientModInitializer
@@ -48,7 +48,7 @@ object Crate : ModInitializer, ClientModInitializer {
     @Environment(CLIENT)
     override fun onInitializeClient() {
         BlockEntityRendererRegistry.register(BLOCK_ENTITY_TYPE, ::CrateRenderer)
-        ScreenRegistry.register(SCREEN_HANDLER_TYPE, ::CreateScreen)
+        ScreenRegistry.register(SCREEN_HANDLER_TYPE, ::CrateScreen)
 
         AttackBlockCallback.EVENT.register(BLOCK::onAttackedByPlayer)
     }

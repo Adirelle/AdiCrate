@@ -4,6 +4,8 @@ package dev.adirelle.adicrate.client.renderer
 
 import dev.adirelle.adicrate.AdiCrate
 import dev.adirelle.adicrate.block.entity.CrateBlockEntity
+import net.fabricmc.api.EnvType.CLIENT
+import net.fabricmc.api.Environment
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.render.OverlayTexture
 import net.minecraft.client.render.VertexConsumerProvider
@@ -14,6 +16,7 @@ import net.minecraft.client.render.model.json.ModelTransformation
 import net.minecraft.client.util.math.MatrixStack
 import net.minecraft.util.math.Vec3f
 
+@Environment(CLIENT)
 class CrateRenderer(private val ctx: Context) : BlockEntityRenderer<CrateBlockEntity> {
 
     private val LOGGER = AdiCrate.LOGGER
