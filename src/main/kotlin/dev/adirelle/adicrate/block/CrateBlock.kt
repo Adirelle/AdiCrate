@@ -66,7 +66,7 @@ class CrateBlock :
 
     override fun onPlaced(world: World, pos: BlockPos, state: BlockState, placer: LivingEntity?, itemStack: ItemStack) {
         world.withBlockEntity(pos, Crate.BLOCK_ENTITY_TYPE) { node ->
-            LOGGER.info("placed, looking for network")
+            LOGGER.debug("placed, looking for network")
             for (direction in Direction.values()) {
                 val neighbor = world.getBlockEntity(pos.offset(direction))
                 val connected = when (neighbor) {
