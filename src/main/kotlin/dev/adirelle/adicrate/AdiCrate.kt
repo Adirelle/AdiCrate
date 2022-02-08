@@ -1,10 +1,12 @@
 package dev.adirelle.adicrate
 
+import dev.adirelle.adicrate.abstraction.FrontInteractionHandler
 import dev.adirelle.adicrate.network.PullItemC2SPacket
 import net.fabricmc.api.ClientModInitializer
 import net.fabricmc.api.EnvType.CLIENT
 import net.fabricmc.api.Environment
 import net.fabricmc.api.ModInitializer
+import net.fabricmc.fabric.api.event.player.AttackBlockCallback
 import net.minecraft.util.Identifier
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
@@ -28,7 +30,8 @@ object AdiCrate : ModInitializer, ClientModInitializer {
     @Environment(CLIENT)
     override fun onInitializeClient() {
         Crate.onInitializeClient()
-        Controller.onInitializeClient()
+        AttackBlockCallback.EVENT.register(FrontInteractionHandler.Companion)
+
         LOGGER.info("AdiCrafter initialized on client")
     }
 }

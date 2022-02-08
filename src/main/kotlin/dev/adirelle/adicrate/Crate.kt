@@ -14,7 +14,6 @@ import net.fabricmc.api.Environment
 import net.fabricmc.api.ModInitializer
 import net.fabricmc.fabric.api.client.rendering.v1.BlockEntityRendererRegistry
 import net.fabricmc.fabric.api.client.screenhandler.v1.ScreenRegistry
-import net.fabricmc.fabric.api.event.player.AttackBlockCallback
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings
 import net.fabricmc.fabric.api.screenhandler.v1.ScreenHandlerRegistry
 import net.fabricmc.fabric.api.transfer.v1.item.ItemStorage
@@ -49,7 +48,5 @@ object Crate : ModInitializer, ClientModInitializer {
     override fun onInitializeClient() {
         BlockEntityRendererRegistry.register(BLOCK_ENTITY_TYPE, ::CrateRenderer)
         ScreenRegistry.register(SCREEN_HANDLER_TYPE, ::CrateScreen)
-
-        AttackBlockCallback.EVENT.register(BLOCK::onAttackedByPlayer)
     }
 }

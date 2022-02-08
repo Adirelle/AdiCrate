@@ -5,11 +5,7 @@ package dev.adirelle.adicrate
 import dev.adirelle.adicrate.block.ControllerBlock
 import dev.adirelle.adicrate.block.entity.ControllerBlockEntity
 import dev.adirelle.adicrate.utils.extensions.register
-import net.fabricmc.api.ClientModInitializer
-import net.fabricmc.api.EnvType.CLIENT
-import net.fabricmc.api.Environment
 import net.fabricmc.api.ModInitializer
-import net.fabricmc.fabric.api.event.player.AttackBlockCallback
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings
 import net.fabricmc.fabric.api.transfer.v1.item.ItemStorage
 import net.minecraft.block.entity.BlockEntityType
@@ -17,7 +13,7 @@ import net.minecraft.item.BlockItem
 import net.minecraft.item.ItemGroup
 
 @Suppress("unused", "MemberVisibilityCanBePrivate")
-object Controller : ModInitializer, ClientModInitializer {
+object Controller : ModInitializer {
 
     private val LOGGER = AdiCrate.LOGGER
 
@@ -35,10 +31,5 @@ object Controller : ModInitializer, ClientModInitializer {
         BLOCK_ENTITY_TYPE.register(ID)
 
         ItemStorage.SIDED.registerForBlockEntity({ blockEntity, _ -> blockEntity.storage }, BLOCK_ENTITY_TYPE)
-    }
-
-    @Environment(CLIENT)
-    override fun onInitializeClient() {
-        AttackBlockCallback.EVENT.register(BLOCK::onAttackedByPlayer)
     }
 }

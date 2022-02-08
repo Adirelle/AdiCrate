@@ -66,7 +66,7 @@ class CrateBlockEntity(pos: BlockPos, state: BlockState) :
 
     override val storage: Network.Storage by ::internalStorage
 
-    val facing: Direction
+    override val facing: Direction
         get() = cachedState.get(Properties.HORIZONTAL_FACING)
 
     val upgradeInventory: SimpleInventory = UpgradeInventory().also {

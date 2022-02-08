@@ -22,6 +22,7 @@ import net.minecraft.block.BlockState
 import net.minecraft.block.entity.BlockEntity
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.nbt.NbtCompound
+import net.minecraft.state.property.Properties
 import net.minecraft.util.Hand
 import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.Direction
@@ -44,6 +45,9 @@ class ControllerBlockEntity(pos: BlockPos, state: BlockState) :
     private val nodes = HashSet<Node>()
 
     val storage: Storage<ItemVariant> = StorageAdapter()
+
+    override val facing: Direction
+        get() = cachedState.get(Properties.HORIZONTAL_FACING)
 
     override val info: Info
         get() = this

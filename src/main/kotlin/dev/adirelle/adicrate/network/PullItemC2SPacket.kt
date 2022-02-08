@@ -14,6 +14,7 @@ import net.minecraft.network.PacketByteBuf
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.network.ServerPlayNetworkHandler
 import net.minecraft.server.network.ServerPlayerEntity
+import net.minecraft.util.Identifier
 import net.minecraft.util.math.BlockPos
 
 object PullItemC2SPacket : ServerPlayNetworking.PlayChannelHandler {
@@ -42,20 +43,28 @@ object PullItemC2SPacket : ServerPlayNetworking.PlayChannelHandler {
         buf: PacketByteBuf,
         responseSender: PacketSender
     ) {
-        val world = player.world
         val worldId = buf.readIdentifier()
+        val pos = buf.readBlockPos()
+        server.execute {
+            doReceive(player, worldId, pos)
+        }
+    }
+
+    private fun doReceive(
+        player: ServerPlayerEntity,
+        worldId: Identifier,
+        pos: BlockPos
+    ) {
+        val world = player.world
         if (worldId != world.registryKey.value) {
             LOGGER.warn("ignoring packet for wrong world")
             return
         }
-        val pos = buf.readBlockPos()
         val blockEntity = world.getBlockEntity(pos)
         if (blockEntity !is FrontInteractionHandler) {
-            LOGGER.warn("ignoring packet for wrong block")
+            LOGGER.warn("ignoring packet for wrong block, {}, at {}", blockEntity, pos)
             return
         }
-        server.execute {
-            blockEntity.pullItems(player)
-        }
+        blockEntity.pullItems(player)
     }
 }

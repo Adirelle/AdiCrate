@@ -1,9 +1,6 @@
 package dev.adirelle.adicrate.block
 
 import dev.adirelle.adicrate.abstraction.FrontInteractionHandler
-import dev.adirelle.adicrate.network.PullItemC2SPacket
-import net.fabricmc.api.EnvType.CLIENT
-import net.fabricmc.api.Environment
 import net.minecraft.block.Block
 import net.minecraft.block.BlockRenderType
 import net.minecraft.block.BlockState
@@ -13,7 +10,8 @@ import net.minecraft.item.ItemPlacementContext
 import net.minecraft.state.StateManager.Builder
 import net.minecraft.state.property.Properties.HORIZONTAL_FACING
 import net.minecraft.util.ActionResult
-import net.minecraft.util.ActionResult.*
+import net.minecraft.util.ActionResult.PASS
+import net.minecraft.util.ActionResult.SUCCESS
 import net.minecraft.util.BlockMirror
 import net.minecraft.util.BlockRotation
 import net.minecraft.util.Hand
@@ -46,28 +44,6 @@ abstract class AbstractContainerBlock(settings: Settings) : BlockWithEntity(sett
         )
 
     override fun getRenderType(state: BlockState) = BlockRenderType.MODEL
-
-    @Environment(CLIENT)
-    @Suppress("UNUSED_PARAMETER")
-    fun onAttackedByPlayer(
-        player: PlayerEntity,
-        world: World,
-        hand: Hand,
-        pos: BlockPos,
-        direction: Direction
-    ): ActionResult =
-        world.getBlockState(pos).let { state ->
-            if (state.isOf(this) && direction == state.get(HORIZONTAL_FACING)) {
-                if (!player.handSwinging) {
-                    PullItemC2SPacket.send(player, pos)
-                    player.swingHand(hand)
-                }
-                // Do not let the client send an "attack" packet
-                FAIL
-            } else
-            // Not ours or not in face, do not care
-                PASS
-        }
 
     override fun onUse(
         state: BlockState,
