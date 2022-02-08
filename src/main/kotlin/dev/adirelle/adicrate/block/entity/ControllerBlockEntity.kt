@@ -31,6 +31,12 @@ class ControllerBlockEntity(pos: BlockPos, state: BlockState) :
     Info,
     FaceInteractionHandler {
 
+    companion object {
+
+        private val amountComparator = Comparator.comparing<Network.Storage, Long> { it.amount }
+
+    }
+
     private val LOGGER by logger
 
     private val nodes = HashSet<Node>()
@@ -139,9 +145,14 @@ class ControllerBlockEntity(pos: BlockPos, state: BlockState) :
 
     private inner class StorageAdapter : Storage<ItemVariant> {
 
+        private val storages
+            get() = nodes.stream()
+                .map(Node::storage)
+
         override fun insert(resource: ItemVariant, maxAmount: Long, tx: TransactionContext): Long {
-            val views = nodes.map(Node::storage)
-                .filter { it.canInsert(resource) }
+            val views = storages
+                .filter { !it.isResourceBlank && it.canInsert(resource) }
+                .toList()
                 .sortedBy { it.capacity - it.amount }
             var inserted = 0L
             for (view in views) {
@@ -152,8 +163,9 @@ class ControllerBlockEntity(pos: BlockPos, state: BlockState) :
         }
 
         override fun extract(resource: ItemVariant, maxAmount: Long, tx: TransactionContext): Long {
-            val views = nodes.map(Node::storage)
+            val views = storages
                 .filter { it.canExtract(resource) }
+                .toList()
                 .sortedBy { it.amount }
             var extracted = 0L
             for (view in views) {
@@ -164,14 +176,12 @@ class ControllerBlockEntity(pos: BlockPos, state: BlockState) :
         }
 
         override fun iterator(tx: TransactionContext): MutableIterator<StorageView<ItemVariant>> =
-            nodes.map(Node::storage)
-                .filterNot { it.isResourceBlank }
-                .toMutableList()
-                .iterator()
+            storages.iterator()
 
         override fun exactView(tx: TransactionContext, resource: ItemVariant): StorageView<ItemVariant>? =
-            nodes.map(Node::storage)
-                .filterNot { it.resource == resource }
-                .maxByOrNull { it.amount }
+            storages
+                .filter { it.resource == resource }
+                .max(amountComparator)
+                .orElse(null)
     }
 }
