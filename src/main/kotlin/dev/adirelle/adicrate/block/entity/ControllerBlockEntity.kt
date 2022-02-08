@@ -8,6 +8,7 @@ import dev.adirelle.adicrate.abstraction.FrontInteractionHandler
 import dev.adirelle.adicrate.abstraction.Network
 import dev.adirelle.adicrate.abstraction.Network.Info
 import dev.adirelle.adicrate.abstraction.Network.Node
+import dev.adirelle.adicrate.utils.extensions.set
 import dev.adirelle.adicrate.utils.logger
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant
@@ -20,6 +21,7 @@ import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext
 import net.minecraft.block.BlockState
 import net.minecraft.block.entity.BlockEntity
 import net.minecraft.entity.player.PlayerEntity
+import net.minecraft.nbt.NbtCompound
 import net.minecraft.util.Hand
 import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.Direction
@@ -46,8 +48,7 @@ class ControllerBlockEntity(pos: BlockPos, state: BlockState) :
     override val info: Info
         get() = this
 
-    override val name: String
-        get() = pos.toShortString()
+    override var name: String = pos.toShortString()
 
     private var dirty = true
     private var destroyed = false
@@ -78,6 +79,20 @@ class ControllerBlockEntity(pos: BlockPos, state: BlockState) :
         if (!dirty) return
         dirty = false
         rebuild(world)
+    }
+
+    override fun readNbt(nbt: NbtCompound) {
+        super.readNbt(nbt)
+        nbt["name"] = name
+    }
+
+    override fun writeNbt(nbt: NbtCompound) {
+        super.writeNbt(nbt)
+        nbt.getString("name")
+            .takeUnless { it.isEmpty() }
+            ?.let { name ->
+                this.name = name
+            }
     }
 
     private fun rebuild(world: World) {

@@ -12,6 +12,8 @@ import net.minecraft.block.Material
 import net.minecraft.block.entity.BlockEntity
 import net.minecraft.block.entity.BlockEntityTicker
 import net.minecraft.block.entity.BlockEntityType
+import net.minecraft.entity.LivingEntity
+import net.minecraft.item.ItemStack
 import net.minecraft.util.math.BlockPos
 import net.minecraft.world.World
 
@@ -32,5 +34,21 @@ class ControllerBlock :
 
     override fun onRemoved(world: World, pos: BlockPos) {
         world.withBlockEntity(pos, Controller.BLOCK_ENTITY_TYPE, Network::destroy)
+    }
+
+    override fun onPlaced(
+        world: World,
+        pos: BlockPos,
+        state: BlockState,
+        placer: LivingEntity?,
+        itemStack: ItemStack
+    ) {
+        if (itemStack.hasCustomName()) {
+            LOGGER.info("custom name: {}", itemStack.name)
+            world.withBlockEntity(pos, Controller.BLOCK_ENTITY_TYPE) {
+                it.name = itemStack.name.asString()
+                LOGGER.info("network name: {}", it.name)
+            }
+        }
     }
 }

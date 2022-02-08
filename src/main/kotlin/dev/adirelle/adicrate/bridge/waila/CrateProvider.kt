@@ -96,12 +96,12 @@ object CrateProvider : IWailaPlugin, IBlockComponentProvider, IServerDataProvide
                     .with(CrateStorage.contentText(data.amount, data.capacity))
             }
 
-            if (config.showController && data.networkInfo.isNotEmpty()) {
+            if (config.showController && data.networkName.isNotEmpty()) {
                 tooltip.addLine()
                     .with(
                         PairComponent(
                             TranslatableText("tooltip.adicrate.crate.network_info"),
-                            LiteralText(data.networkInfo)
+                            LiteralText(data.networkName)
                         )
                     )
             }
@@ -141,7 +141,7 @@ object CrateProvider : IWailaPlugin, IBlockComponentProvider, IServerDataProvide
         val capacity: Long,
         val isJammed: Boolean,
         val facing: Direction,
-        var networkInfo: String
+        var networkName: String
     ) {
 
         companion object {
@@ -164,7 +164,7 @@ object CrateProvider : IWailaPlugin, IBlockComponentProvider, IServerDataProvide
                         getLong("capacity"),
                         getBoolean("jammed"),
                         Direction.fromHorizontal(getInt("facing")),
-                        getString("networkInfo")
+                        getString("networkName")
                     )
                 }
         }
@@ -178,7 +178,7 @@ object CrateProvider : IWailaPlugin, IBlockComponentProvider, IServerDataProvide
             it["capacity"] = capacity
             it["jammed"] = isJammed
             it["facing"] = facing.horizontal
-            it["networkInfo"] = networkInfo
+            it["networkName"] = networkName
         }
     }
 }
