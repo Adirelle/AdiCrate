@@ -1,7 +1,7 @@
 package dev.adirelle.adicrate.network
 
 import dev.adirelle.adicrate.AdiCrate
-import dev.adirelle.adicrate.abstraction.FaceInteractionHandler
+import dev.adirelle.adicrate.abstraction.FrontInteractionHandler
 import dev.adirelle.adicrate.utils.logger
 import net.fabricmc.api.EnvType.CLIENT
 import net.fabricmc.api.Environment
@@ -50,7 +50,7 @@ object PullItemC2SPacket : ServerPlayNetworking.PlayChannelHandler {
         }
         val pos = buf.readBlockPos()
         val blockEntity = world.getBlockEntity(pos)
-        if (blockEntity !is FaceInteractionHandler) {
+        if (blockEntity !is FrontInteractionHandler) {
             LOGGER.warn("ignoring packet for wrong block")
             return
         }

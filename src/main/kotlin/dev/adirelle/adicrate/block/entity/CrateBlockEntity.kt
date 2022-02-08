@@ -3,7 +3,7 @@
 package dev.adirelle.adicrate.block.entity
 
 import dev.adirelle.adicrate.Crate
-import dev.adirelle.adicrate.abstraction.FaceInteractionHandler
+import dev.adirelle.adicrate.abstraction.FrontInteractionHandler
 import dev.adirelle.adicrate.abstraction.Network
 import dev.adirelle.adicrate.abstraction.Network.Info
 import dev.adirelle.adicrate.abstraction.Network.Node
@@ -46,7 +46,7 @@ class CrateBlockEntity(pos: BlockPos, state: BlockState) :
     NamedScreenHandlerFactory,
     CrateStorage.Listener,
     Node,
-    FaceInteractionHandler {
+    FrontInteractionHandler {
 
     companion object {
 

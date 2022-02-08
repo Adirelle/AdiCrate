@@ -4,7 +4,7 @@ package dev.adirelle.adicrate.block.entity
 
 import dev.adirelle.adicrate.Controller
 import dev.adirelle.adicrate.Crate
-import dev.adirelle.adicrate.abstraction.FaceInteractionHandler
+import dev.adirelle.adicrate.abstraction.FrontInteractionHandler
 import dev.adirelle.adicrate.abstraction.Network
 import dev.adirelle.adicrate.abstraction.Network.Info
 import dev.adirelle.adicrate.abstraction.Network.Node
@@ -29,7 +29,7 @@ class ControllerBlockEntity(pos: BlockPos, state: BlockState) :
     BlockEntity(Controller.BLOCK_ENTITY_TYPE, pos, state),
     Network,
     Info,
-    FaceInteractionHandler {
+    FrontInteractionHandler {
 
     companion object {
 

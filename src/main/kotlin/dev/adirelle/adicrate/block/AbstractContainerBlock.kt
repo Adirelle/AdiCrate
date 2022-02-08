@@ -1,6 +1,6 @@
 package dev.adirelle.adicrate.block
 
-import dev.adirelle.adicrate.abstraction.FaceInteractionHandler
+import dev.adirelle.adicrate.abstraction.FrontInteractionHandler
 import dev.adirelle.adicrate.network.PullItemC2SPacket
 import net.fabricmc.api.EnvType.CLIENT
 import net.fabricmc.api.Environment
@@ -82,9 +82,9 @@ abstract class AbstractContainerBlock(settings: Settings) : BlockWithEntity(sett
                 PASS
             hit.side == state.get(HORIZONTAL_FACING) -> {
                 if (!world.isClient) {
-                    (world.getBlockEntity(pos) as? FaceInteractionHandler)
+                    (world.getBlockEntity(pos) as? FrontInteractionHandler)
                         ?.pushItems(player, hand)
-                        ?: throw IllegalStateException("block at $pos should implement ${FaceInteractionHandler::class.qualifiedName}")
+                        ?: throw IllegalStateException("block at $pos should implement ${FrontInteractionHandler::class.qualifiedName}")
                 }
                 SUCCESS
             }
