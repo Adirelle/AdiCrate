@@ -85,8 +85,7 @@ class CrateStorage(private val listener: Listener) :
         }
 
     override fun canInsert(resource: ItemVariant) =
-        !resource.isBlank && resource.item.maxCount > 1 && canInsert() &&
-            (resourceInternal.isBlank || resource.matches(resourceInternal))
+        !resource.isBlank && canInsert() && (resourceInternal.isBlank || resource.matches(resourceInternal))
 
     private fun canInsert() =
         !isFull() && !isJammed()
