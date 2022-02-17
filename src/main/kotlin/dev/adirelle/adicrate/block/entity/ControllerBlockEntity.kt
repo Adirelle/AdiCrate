@@ -36,6 +36,9 @@ class ControllerBlockEntity(pos: BlockPos, state: BlockState) :
 
     companion object {
 
+        private const val MAX_DISTANCE = 16
+        private const val MAX_NODE_COUNT = 256
+
         private val amountComparator = Comparator.comparing<Network.Storage, Long> { it.amount }
 
     }
@@ -57,8 +60,11 @@ class ControllerBlockEntity(pos: BlockPos, state: BlockState) :
     private var dirty = true
     private var destroyed = false
 
+    override fun accept(node: Node) =
+        nodes.size < MAX_NODE_COUNT && node.getPos().getManhattanDistance(this.pos) <= MAX_DISTANCE
+
     override fun add(node: Node) {
-        if (!destroyed && nodes.add(node)) {
+        if (!destroyed && accept(node) && nodes.add(node)) {
             LOGGER.debug("added ${node.getPos()}")
             dirty = true
         }

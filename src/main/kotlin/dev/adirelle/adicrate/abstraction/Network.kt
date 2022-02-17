@@ -10,6 +10,8 @@ interface Network {
 
     val info: Info
 
+    fun accept(node: Node): Boolean
+
     fun add(node: Node)
     fun remove(node: Node)
     fun destroy()

@@ -91,7 +91,7 @@ class CrateBlockEntity(pos: BlockPos, state: BlockState) :
     }
 
     override fun connectTo(network: Network): Boolean {
-        if (network === this.network) return false
+        if (network === this.network || !network.accept(this)) return false
         this.disconnect()
         LOGGER.debug("connecting to $network")
         this.network = network
