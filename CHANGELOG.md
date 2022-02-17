@@ -4,9 +4,6 @@
 
 ### Added
 
-* the Crate
-* the Controller
-
 ### Changed
 
 ### Deprecated
@@ -16,3 +13,10 @@
 ### Fixed
 
 ### Security
+
+## [0.1.0] - 2022-02-17
+
+### Added
+
+* the Crate
+* the Controller
