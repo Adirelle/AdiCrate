@@ -93,7 +93,7 @@ class CrateBlockEntity(pos: BlockPos, state: BlockState) :
     override fun connectTo(network: Network): Boolean {
         if (network === this.network) return false
         this.disconnect()
-        LOGGER.info("connecting to $network")
+        LOGGER.debug("connecting to $network")
         this.network = network
         network.add(this)
         return true
@@ -104,7 +104,7 @@ class CrateBlockEntity(pos: BlockPos, state: BlockState) :
 
     override fun disconnect() {
         val oldNetwork = network ?: return
-        LOGGER.info("disconnecting from $oldNetwork")
+        LOGGER.debug("disconnecting from $oldNetwork")
         network = null
         oldNetwork.remove(this)
     }
