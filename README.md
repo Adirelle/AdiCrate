@@ -53,7 +53,7 @@ The controller does not interact with unlocked, empty crates, so you cannot inse
 crates contain/accept the same item, the controller will prioritize them depending on the operation:
 
 * when inserting, it starts with the non-full crate with the highest number of items,
-* when extracting, it starts wutg the crate with the lowest number of items.
+* when extracting, it starts with the crate with the lowest number of items.
 
 The controller can also be accessed by hoppers and any mod that supports the Fabric Transfer API.
 
