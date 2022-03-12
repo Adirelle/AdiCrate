@@ -69,6 +69,10 @@ class CrateBlockEntity(pos: BlockPos, state: BlockState) :
     override val facing: Direction
         get() = cachedState.get(Properties.HORIZONTAL_FACING)
 
+    // Note: there is a bad java/kotlin interaction there and this override is required to fix it
+    override fun getPos(): BlockPos =
+        super.getPos()
+
     val upgradeInventory: SimpleInventory = UpgradeInventory().also {
         it.addListener {
             if (world?.isClient == false) {
