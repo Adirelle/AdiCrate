@@ -161,7 +161,7 @@ class CrateBlockEntity(pos: BlockPos, state: BlockState) :
     }
 
     override fun pushItems(player: PlayerEntity, hand: Hand) {
-        if (player.isSneaking) {
+        if (player.isSneaking || player.getStackInHand(hand).isEmpty) {
             insertAllFromInventory(PlayerInventoryStorage.of(player))
         } else {
             insertFromSlot(ContainerItemContext.ofPlayerHand(player, hand).mainSlot)

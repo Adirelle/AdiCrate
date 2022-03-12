@@ -128,7 +128,7 @@ class ControllerBlockEntity(pos: BlockPos, state: BlockState) :
 
     override fun pushItems(player: PlayerEntity, hand: Hand) {
         val source =
-            if (player.isSneaking) PlayerInventoryStorage.of(player)
+            if (player.isSneaking || player.getStackInHand(hand).isEmpty) PlayerInventoryStorage.of(player)
             else ContainerItemContext.ofPlayerHand(player, player.preferredHand).mainSlot
         StorageUtil.move(source, storage, { true }, Long.MAX_VALUE, null)
     }
