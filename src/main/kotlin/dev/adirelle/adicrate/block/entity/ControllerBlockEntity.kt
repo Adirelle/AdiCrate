@@ -27,6 +27,7 @@ import net.minecraft.util.Hand
 import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.Direction
 import net.minecraft.world.World
+import java.util.*
 
 class ControllerBlockEntity(pos: BlockPos, state: BlockState) :
     BlockEntity(Controller.BLOCK_ENTITY_TYPE, pos, state),
@@ -106,9 +107,49 @@ class ControllerBlockEntity(pos: BlockPos, state: BlockState) :
     }
 
     private fun rebuild(world: World) {
-        val visitor = NetworkVisitor(world)
-        visitor.visitNeighbors(pos)
-        visitor.unvisited.values.forEach(Node::disconnect)
+
+        val unvisited = HashMap<BlockPos, Node>(nodes.size)
+        val visited = HashSet<BlockPos>(nodes.size * 2)
+        val queue = LinkedList<BlockPos>()
+
+        fun enqueue(pos: BlockPos) {
+            if (visited.add(pos)) {
+                queue.add(pos)
+            }
+        }
+
+        enqueue(pos)
+
+        while (queue.isNotEmpty()) {
+            val pos = queue.remove()
+
+            val state = world.getBlockState(pos)
+            when {
+                state.isOf(Crate.BLOCK)      ->
+                    // Try to connect new crates
+                    if (unvisited.remove(pos) == null) {
+                        val node = world.getBlockEntity(pos, Crate.BLOCK_ENTITY_TYPE)
+                            .orElseThrow { IllegalArgumentException("expected a CrateBlockEntityType") }
+
+                        if (!node.connectTo(this)) continue
+                    }
+                state.isOf(Controller.BLOCK) ->
+                    // Ignore other controllers
+                    if (pos != this.pos) continue
+                else                         ->
+                    // Ignore non-mod blocks
+                    continue
+            }
+
+            enqueue(pos.north())
+            enqueue(pos.east())
+            enqueue(pos.up())
+            enqueue(pos.south())
+            enqueue(pos.west())
+            enqueue(pos.down())
+        }
+
+        unvisited.values.map(Node::disconnect)
 
         LOGGER.debug("nodes: ${nodes.map(Node::getPos).joinToString()}")
     }
@@ -131,41 +172,6 @@ class ControllerBlockEntity(pos: BlockPos, state: BlockState) :
             if (player.isSneaking || player.getStackInHand(hand).isEmpty) PlayerInventoryStorage.of(player)
             else ContainerItemContext.ofPlayerHand(player, player.preferredHand).mainSlot
         StorageUtil.move(source, storage, { true }, Long.MAX_VALUE, null)
-    }
-
-    private inner class NetworkVisitor(private val world: World) {
-
-        val unvisited = HashMap<BlockPos, Node>(nodes.size)
-
-        private val visited = HashSet<BlockPos>(nodes.size)
-
-        init {
-            nodes.associateBy(Node::getPos).toMap(unvisited)
-        }
-
-        fun visitNeighbors(pos: BlockPos) =
-            Direction.values()
-                .map(pos::offset)
-                .forEach(::visit)
-
-        fun visit(pos: BlockPos) {
-            if (!visited.add(pos)) return
-
-            if (pos in unvisited) {
-                unvisited.remove(pos)
-            } else {
-                if (!world.getBlockState(pos).isOf(Crate.BLOCK)) {
-                    return
-                }
-                val node = world.getBlockEntity(pos, Crate.BLOCK_ENTITY_TYPE)
-                    .orElseThrow { IllegalArgumentException("expected a CrateBlockEntityType") }
-
-                node.connectTo(this@ControllerBlockEntity)
-                nodes.add(node)
-            }
-
-            visitNeighbors(pos)
-        }
     }
 
     private inner class StorageAdapter : Storage<ItemVariant> {

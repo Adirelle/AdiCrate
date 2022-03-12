@@ -14,6 +14,8 @@
 
 ### Fixed
 
+* Hopefully fix the crash when placing a controller.
+
 ### Security
 
 ## [0.1.0] - 2022-02-17
