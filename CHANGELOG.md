@@ -6,6 +6,8 @@
 
 ### Changed
 
+* Only show crate item in tooltip when looking at the crate front.
+
 ### Deprecated
 
 ### Removed

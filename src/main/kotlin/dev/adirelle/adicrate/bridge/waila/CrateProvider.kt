@@ -66,7 +66,7 @@ object CrateProvider : IWailaPlugin, IBlockComponentProvider, IServerDataProvide
         LOGGER.info("getIcon, data={}", accessor.serverData.asString())
         return accessor
             .withServerData { data ->
-                if (true || data.isFacing(accessor.side))
+                if (data.isFacing(accessor.side))
                     ItemComponent(data.resource.toStack())
                 else
                     null
