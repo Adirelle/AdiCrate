@@ -11,7 +11,6 @@ import mcp.mobius.waila.api.*
 import mcp.mobius.waila.api.component.ItemComponent
 import mcp.mobius.waila.api.component.PairComponent
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant
-import net.minecraft.client.MinecraftClient
 import net.minecraft.client.item.TooltipContext
 import net.minecraft.nbt.NbtCompound
 import net.minecraft.server.network.ServerPlayerEntity
@@ -27,7 +26,6 @@ object CrateProvider : IWailaPlugin, IBlockComponentProvider, IServerDataProvide
 
     val showContent = AdiCrate.id("show_content")
     val showController = AdiCrate.id("show_controller")
-    val showInteractionHints = AdiCrate.id("show_interaction_hints")
 
     val IPluginConfig.showContent: Boolean
         get() = getBoolean(this@CrateProvider.showContent)
@@ -35,15 +33,11 @@ object CrateProvider : IWailaPlugin, IBlockComponentProvider, IServerDataProvide
     val IPluginConfig.showController: Boolean
         get() = getBoolean(this@CrateProvider.showController)
 
-    val IPluginConfig.showInteractionHints: Boolean
-        get() = getBoolean(this@CrateProvider.showInteractionHints)
-
     private const val DATA_KEY = "${AdiCrate.MOD_ID}:crate"
 
     override fun register(registrar: IRegistrar) {
         registrar.addSyncedConfig(showContent, true)
         registrar.addSyncedConfig(showController, true)
-        registrar.addSyncedConfig(showInteractionHints, true)
         val clazz = CrateBlockEntity::class.java
         registrar.addIcon(this, clazz)
         registrar.addComponent(this, TooltipPosition.BODY, clazz)
@@ -108,29 +102,6 @@ object CrateProvider : IWailaPlugin, IBlockComponentProvider, IServerDataProvide
 
             if (config.showContent && data.isJammed) {
                 tooltip.addLine(TranslatableText("tooltip.adicrate.crate.jammed"))
-            }
-        }
-    }
-
-    override fun appendTail(tooltip: ITooltip, accessor: IBlockAccessor, config: IPluginConfig) {
-        if (!config.showInteractionHints) return
-
-        fun addHint(id: String, vararg args: Any) {
-            tooltip.addLine(TranslatableText("tooltip.adicrate.crate.interaction_hints.$id", *args))
-        }
-
-        with(MinecraftClient.getInstance().options) {
-            val useKey = keyUse.boundKeyLocalizedText
-            val attackKey = keyAttack.boundKeyLocalizedText
-            val sneakKey = keySneak.boundKeyLocalizedText
-
-            if (accessor.withServerData { it.isFacing(accessor.side) }.orElse(false)) {
-                addHint("pull_item", attackKey)
-                addHint("pull_one_item", sneakKey, attackKey)
-                addHint("push_item", useKey)
-                addHint("push_inventory", sneakKey, useKey)
-            } else {
-                addHint("open_gui", useKey)
             }
         }
     }

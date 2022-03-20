@@ -10,6 +10,8 @@
 
 ### Removed
 
+* Tooltip interaction hints.
+
 ### Fixed
 
 ### Security

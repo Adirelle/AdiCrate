@@ -8,13 +8,7 @@
     "tooltip.adicrate.crate.upgrades": "Upgrades\nInsert items to upgrade the crate",
     "tooltip.adicrate.crate.jammed": "§rcJammed!§r",
     "tooltip.adicrate.crate.network_info": "Controller",
-    "tooltip.adicrate.crate.interaction_hints.pull_item": "[%s]: pull a stack",
-    "tooltip.adicrate.crate.interaction_hints.pull_one_item": "[%s+%s]: pull one item",
-    "tooltip.adicrate.crate.interaction_hints.push_item": "[%s]: insert held item stack",
-    "tooltip.adicrate.crate.interaction_hints.push_inventory": "[%s+%s]: insert from inventory",
-    "tooltip.adicrate.crate.interaction_hints.open_gui": "[%s]: open screen",
     "config.waila.plugin_adicrate": "AdiCrate",
     "config.waila.plugin_adicrate.show_content": "Show crate content",
-    "config.waila.plugin_adicrate.show_controller": "Show crate controller",
-    "config.waila.plugin_adicrate.show_interaction_hints": "Show interaction hints"
+    "config.waila.plugin_adicrate.show_controller": "Show crate controller"
 }
