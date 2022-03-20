@@ -34,16 +34,16 @@ class CrateBlock :
     override fun createBlockEntity(pos: BlockPos, state: BlockState): BlockEntity =
         CrateBlockEntity(pos, state)
 
-    override fun getDroppedStacks(state: BlockState, builder: LootContext.Builder): MutableList<ItemStack> {
+    override fun getDroppedStacks(state: BlockState, builder: LootContext.Builder): MutableList<ItemStack> =
         @Suppress("DEPRECATION")
-        val crate = builder.get(LootContextParameters.BLOCK_ENTITY) as? CrateBlockEntity
-            ?: return super.getDroppedStacks(state, builder)
-        return MutableList(1) {
-            ItemStack(Item.BLOCK_ITEMS[this]).also {
-                BlockItem.setBlockEntityNbt(it, crate.type, crate.createNbt())
+        super.getDroppedStacks(state, builder).also { list ->
+            val blockEntity = builder.get(LootContextParameters.BLOCK_ENTITY)
+            if (blockEntity is CrateBlockEntity) {
+                val stack = ItemStack(Item.BLOCK_ITEMS[this])
+                BlockItem.setBlockEntityNbt(stack, blockEntity.type, blockEntity.createNbt())
+                list.add(stack)
             }
         }
-    }
 
     override fun appendTooltip(
         stack: ItemStack,

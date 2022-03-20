@@ -1,12 +1,12 @@
 {
     "parent": "minecraft:block/cube",
     "textures": {
-        "up": "minecraft:block/barrel_top",
+        "up": "adicrate:block/crate_front",
         "down": "minecraft:block/barrel_bottom",
         "north": "minecraft:block/barrel_side",
         "east": "minecraft:block/barrel_side",
         "south": "minecraft:block/barrel_side",
         "west": "minecraft:block/barrel_side",
-        "particle": "minecraft:block/oak_planks"
+        "particle": "minecraft:block/barrel_side"
     }
 }

@@ -2,24 +2,22 @@
 
 package dev.adirelle.adicrate.client.renderer
 
-import dev.adirelle.adicrate.AdiCrate
 import dev.adirelle.adicrate.block.entity.CrateBlockEntity
 import net.fabricmc.api.EnvType.CLIENT
 import net.fabricmc.api.Environment
 import net.minecraft.client.MinecraftClient
-import net.minecraft.client.render.OverlayTexture
 import net.minecraft.client.render.VertexConsumerProvider
 import net.minecraft.client.render.WorldRenderer
 import net.minecraft.client.render.block.entity.BlockEntityRenderer
 import net.minecraft.client.render.block.entity.BlockEntityRendererFactory.Context
 import net.minecraft.client.render.model.json.ModelTransformation
 import net.minecraft.client.util.math.MatrixStack
+import net.minecraft.item.ItemStack
+import net.minecraft.util.math.Quaternion
 import net.minecraft.util.math.Vec3f
 
 @Environment(CLIENT)
 class CrateRenderer(private val ctx: Context) : BlockEntityRenderer<CrateBlockEntity> {
-
-    private val LOGGER = AdiCrate.LOGGER
 
     override fun render(
         crate: CrateBlockEntity,
@@ -29,43 +27,67 @@ class CrateRenderer(private val ctx: Context) : BlockEntityRenderer<CrateBlockEn
         light: Int,
         overlay: Int
     ) {
-        val world = crate.world?.takeIf { it.isClient } ?: return
-        val direction = crate.facing
+        val frontLight = WorldRenderer.getLightmapCoordinates(crate.world, crate.pos.offset(crate.facing))
 
-        matrices.push()
+        matrices.withNested {
+            matrices.translate(0.5, 0.5, 0.5)
+            matrices.multiply(Vec3f.NEGATIVE_Y.getDegreesQuaternion(crate.facing.opposite.asRotation()))
 
-        matrices.translate(0.5, 0.5, 0.5)
-        matrices.multiply(Vec3f.NEGATIVE_Y.getDegreesQuaternion(direction.opposite.asRotation()))
-
-        crate.storage.resource
-            .takeUnless { it.isBlank }
-            ?.let { resource ->
-                // Render Item
-                matrices.push()
-                matrices.translate(0.0, 0.0, -0.5)
-                matrices.scale(0.7f, 0.7f, 0.001f)
-
-                val lightAbove = WorldRenderer.getLightmapCoordinates(world, crate.pos.offset(direction))
-                MinecraftClient.getInstance().itemRenderer
-                    .renderItem(
-                        resource.toStack(),
-                        ModelTransformation.Mode.FIXED,
-                        lightAbove,
-                        OverlayTexture.DEFAULT_UV,
-                        matrices,
-                        vertexConsumers,
-                        0
-                    )
-                matrices.pop()
+            val resource = crate.storage.resource
+            if (!resource.isBlank) {
+                matrices.withNested {
+                    renderItem(resource.toStack(), matrices, vertexConsumers, frontLight, overlay)
+                }
             }
 
-        // Render amount
-        matrices.push()
-        matrices.translate(0.0, -0.5, -0.505)
+            matrices.withNested {
+                renderAmount(crate.storage.amount, matrices, vertexConsumers, frontLight)
+            }
+        }
+    }
+
+    private fun renderItem(
+        stack: ItemStack,
+        matrices: MatrixStack,
+        vertexConsumers: VertexConsumerProvider,
+        light: Int,
+        overlay: Int
+    ) {
+        val itemRenderer = MinecraftClient.getInstance().itemRenderer
+
+        val model = itemRenderer.getModel(stack, null, null, 0)
+        if (model.hasDepth()) {
+            matrices.translate(0.0, 0.0, -0.51)
+            matrices.scale(0.37f, 0.37f, 0.01f)
+            matrices.multiply(Quaternion(-30f, 45f, 0f, true))
+        } else {
+            matrices.translate(0.0, 0.0, -0.5)
+            matrices.scale(0.5f, 0.5f, 0.5f)
+        }
+
+        itemRenderer.renderItem(
+            stack,
+            ModelTransformation.Mode.NONE,
+            light,
+            overlay,
+            matrices,
+            vertexConsumers,
+            0
+        )
+    }
+
+    private fun renderAmount(
+        amount: Long,
+        matrices: MatrixStack,
+        vertexConsumers: VertexConsumerProvider,
+        light: Int
+    ) {
+        matrices.translate(0.0, -0.45, -0.505)
         matrices.scale(-0.02f, -0.02f, -0.02f)
-        val text = java.lang.String.valueOf(crate.storage.amount)
-        val xPosition = (-ctx.textRenderer.getWidth(text).toFloat() / 2)
-        MinecraftClient.getInstance().textRenderer.draw(
+
+        val text = String.format("% 4d", amount)
+        val xPosition = -ctx.textRenderer.getWidth(text).toFloat() / 2
+        ctx.textRenderer.draw(
             text,
             xPosition,
             -9f,
@@ -77,9 +99,14 @@ class CrateRenderer(private val ctx: Context) : BlockEntityRenderer<CrateBlockEn
             0,
             light
         )
-        matrices.pop()
+    }
 
-        // Done
-        matrices.pop()
+    private inline fun MatrixStack.withNested(block: () -> Unit) {
+        push()
+        try {
+            block()
+        } finally {
+            pop()
+        }
     }
 }

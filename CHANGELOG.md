@@ -8,6 +8,7 @@
 
 * Only show crate item in tooltip when looking at the crate front.
 * Sneak+Use opens the create screen from any side.
+* Improved the look of items in crates.
 
 ### Deprecated
 
