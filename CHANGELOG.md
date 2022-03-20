@@ -19,6 +19,7 @@
 ### Fixed
 
 * Controller was dropping nothing.
+* Exception when interacting with controller front.
 
 ### Security
 
