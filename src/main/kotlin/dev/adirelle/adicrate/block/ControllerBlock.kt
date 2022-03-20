@@ -13,7 +13,9 @@ import net.minecraft.block.entity.BlockEntity
 import net.minecraft.block.entity.BlockEntityTicker
 import net.minecraft.block.entity.BlockEntityType
 import net.minecraft.entity.LivingEntity
+import net.minecraft.item.Item
 import net.minecraft.item.ItemStack
+import net.minecraft.loot.context.LootContext
 import net.minecraft.util.math.BlockPos
 import net.minecraft.world.World
 
@@ -35,6 +37,9 @@ class ControllerBlock :
     override fun onRemoved(world: World, pos: BlockPos) {
         world.withBlockEntity(pos, Controller.BLOCK_ENTITY_TYPE, Network::destroy)
     }
+
+    override fun getDroppedStacks(state: BlockState, builder: LootContext.Builder) =
+        mutableListOf(ItemStack(Item.BLOCK_ITEMS[this]))
 
     override fun onPlaced(
         world: World,

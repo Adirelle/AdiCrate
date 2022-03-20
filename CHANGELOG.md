@@ -17,6 +17,8 @@
 
 ### Fixed
 
+* Controller was dropping nothing.
+
 ### Security
 
 ## [0.1.1] - 2022-03-12
