@@ -6,11 +6,21 @@
 
 ### Changed
 
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [0.1.2] - 2022-03-20
+
+### Changed
+
 * Only show crate item in tooltip when looking at the crate front.
 * Sneak+Use opens the create screen from any side.
 * Improved the look of items in crates.
-
-### Deprecated
 
 ### Removed
 
@@ -20,8 +30,6 @@
 
 * Controller was dropping nothing.
 * Exception when interacting with controller front.
-
-### Security
 
 ## [0.1.1] - 2022-03-12
 
