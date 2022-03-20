@@ -54,9 +54,9 @@ abstract class AbstractContainerBlock(settings: Settings) : BlockWithEntity(sett
         hit: BlockHitResult
     ): ActionResult =
         when {
-            !state.isOf(this)                        ->
+            !state.isOf(this)                                              ->
                 PASS
-            hit.side == state.get(HORIZONTAL_FACING) -> {
+            hit.side == state.get(HORIZONTAL_FACING) && !player.isSneaking -> {
                 if (!world.isClient) {
                     (world.getBlockEntity(pos) as? FrontInteractionHandler)
                         ?.pushItems(player, hand)
@@ -64,7 +64,7 @@ abstract class AbstractContainerBlock(settings: Settings) : BlockWithEntity(sett
                 }
                 SUCCESS
             }
-            else                                     ->
+            else                                                           ->
                 onUseInternal(world, pos, player)
         }
 
