@@ -59,7 +59,7 @@ abstract class AbstractContainerBlock(settings: Settings) : BlockWithEntity(sett
             hit.side == state.get(HORIZONTAL_FACING) && !player.isSneaking -> {
                 if (!world.isClient) {
                     (world.getBlockEntity(pos) as? FrontInteractionHandler)
-                        ?.pushItems(player, hand)
+                        ?.pushItems(player)
                         ?: throw IllegalStateException("block at $pos should implement ${FrontInteractionHandler::class.qualifiedName}")
                 }
                 SUCCESS

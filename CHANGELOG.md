@@ -6,6 +6,8 @@
 
 ### Changed
 
+* Sneaking allows to interact "normally" with the front face.
+
 ### Deprecated
 
 ### Removed

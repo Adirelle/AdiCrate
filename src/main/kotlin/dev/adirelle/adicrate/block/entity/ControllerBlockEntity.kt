@@ -155,7 +155,7 @@ class ControllerBlockEntity(pos: BlockPos, state: BlockState) :
     }
 
     override fun pullItems(player: PlayerEntity) {
-        if (player.isSneaking) {
+        if (player.getStackInHand(Hand.MAIN_HAND).isEmpty) {
             PlayerInventoryStorage.of(player).slots.forEach(::restock)
         } else {
             restock(ContainerItemContext.ofPlayerHand(player, Hand.MAIN_HAND).mainSlot)
@@ -167,10 +167,10 @@ class ControllerBlockEntity(pos: BlockPos, state: BlockState) :
         StorageUtil.move(storage, slot, { it == slot.resource }, slot.capacity - slot.amount, null)
     }
 
-    override fun pushItems(player: PlayerEntity, hand: Hand) {
+    override fun pushItems(player: PlayerEntity) {
         val source =
-            if (player.isSneaking || player.getStackInHand(hand).isEmpty) PlayerInventoryStorage.of(player)
-            else ContainerItemContext.ofPlayerHand(player, hand).mainSlot
+            if (player.getStackInHand(Hand.MAIN_HAND).isEmpty) PlayerInventoryStorage.of(player)
+            else ContainerItemContext.ofPlayerHand(player, Hand.MAIN_HAND).mainSlot
         StorageUtil.move(source, storage, { true }, Long.MAX_VALUE, null)
     }
 

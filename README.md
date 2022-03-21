@@ -17,9 +17,8 @@ move it easily.
 You can interact directly with the front of the crate (the face showing the item and its count):
 
 * Left-click (attack) to extract a stack of the contained item,
-* Shift-left-click (sneak-attack) to extract one item,
 * Right-click (use) with an item in hand to insert it into the crate, if possible,
-* Shift-right-click (sneak-use) with an empty hand to insert all matching items from your inventory in the crate.
+* Right-click (use) a non-empty crate with an empty hand to insert all matching items from your inventory.
 
 Crate can be improved by inserting up to 5 upgrades. Right-click (use) any face but the front to open its GUI. At the
 bottom of the screen, just over the player inventory, there are 5 slots available for upgrades. Each slot can contain
@@ -44,10 +43,10 @@ Crates can also be accessed by hoppers and any mod that supports the Fabric Tran
 The controller should be placed next to existing crates and allows to interact with all connected crates. The possible
 interactions (with the front side) are:
 
-* Left-click (attack) with an item in hand to extract a stack of said item,
-* Shift-left-click (sneak-attack) with an empty hand to restock all items in your inventory,
+* Left-click (attack) with an item in hand to complete the stack,
+* Left-click (attack) with an empty hand to complete all stacks of your inventory,
 * Right-click (use) with an item in hand to insert it into a crate that accepts it,
-* Shift-right-click (sneak-use) with an empty hand to insert all matching items from your inventory into the crates.
+* Right-click (use) with an empty hand to insert all matching items from your inventory into the crate.
 
 The controller does not interact with unlocked, empty crates, so you cannot insert new items this way. When several
 crates contain/accept the same item, the controller will prioritize them depending on the operation:

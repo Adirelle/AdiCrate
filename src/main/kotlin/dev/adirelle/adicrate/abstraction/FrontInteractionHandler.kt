@@ -18,14 +18,14 @@ interface FrontInteractionHandler {
 
     fun pullItems(player: PlayerEntity)
 
-    fun pushItems(player: PlayerEntity, hand: Hand)
+    fun pushItems(player: PlayerEntity)
 
     companion object : AttackBlockCallback {
 
         @Environment(CLIENT)
         override fun interact(player: PlayerEntity, world: World, hand: Hand, pos: BlockPos, direction: Direction) =
             (world.getBlockEntity(pos) as? FrontInteractionHandler)
-                ?.takeIf { direction == it.facing }
+                ?.takeIf { direction == it.facing && !player.isSneaking }
                 ?.let {
                     if (!player.handSwinging) {
                         PullItemC2SPacket.send(player, pos)

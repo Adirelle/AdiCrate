@@ -156,19 +156,18 @@ class CrateBlockEntity(pos: BlockPos, state: BlockState) :
         Transaction.openOuter().use { tx ->
             val playerStorage = PlayerInventoryStorage.of(player)
             val resource = internalStorage.resource
-            val amount = if (!player.isSneaking) resource.stackSize else 1L
-            val extracted = internalStorage.extract(resource, amount, tx)
+            val extracted = internalStorage.extract(resource, resource.stackSize, tx)
             LOGGER.debug("extracting {} {} for player", extracted, resource.item.toString())
             playerStorage.offerOrDrop(resource, extracted, tx)
             tx.commit()
         }
     }
 
-    override fun pushItems(player: PlayerEntity, hand: Hand) {
-        if (player.isSneaking || player.getStackInHand(hand).isEmpty) {
+    override fun pushItems(player: PlayerEntity) {
+        if (player.getStackInHand(Hand.MAIN_HAND).isEmpty) {
             insertAllFromInventory(PlayerInventoryStorage.of(player))
         } else {
-            insertFromSlot(ContainerItemContext.ofPlayerHand(player, hand).mainSlot)
+            insertFromSlot(ContainerItemContext.ofPlayerHand(player, Hand.MAIN_HAND).mainSlot)
         }
     }
 
