@@ -14,6 +14,8 @@
 
 ### Fixed
 
+* The controller now properly insert into full crates with "void" upgrade.
+
 ### Security
 
 ## [0.1.2] - 2022-03-20

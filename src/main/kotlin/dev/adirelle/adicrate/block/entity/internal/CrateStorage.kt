@@ -65,7 +65,7 @@ class CrateStorage(private val listener: Listener) :
                 resourceInternal = ItemVariant.blank()
                 listener.onContentUpdated()
             }
-            if (field.void && isJammed()) {
+            if (field.void && amountInternal > realCapacity) {
                 amountInternal = realCapacity
                 listener.onContentUpdated()
             }
@@ -85,15 +85,12 @@ class CrateStorage(private val listener: Listener) :
         }
 
     override fun canInsert(resource: ItemVariant) =
-        !resource.isBlank && canInsert() && (resourceInternal.isBlank || resource.matches(resourceInternal))
+        !resource.isBlank &&
+            (upgrade.void || amountInternal < realCapacity) &&
+            (resourceInternal.isBlank || resource.matches(resourceInternal))
 
-    private fun canInsert() =
-        !isFull() && !isJammed()
-
-    private fun isFull() =
-        !upgrade.void && amountInternal >= realCapacity
-
-    override fun isJammed() = amountInternal > realCapacity
+    override fun isJammed() =
+        amountInternal > realCapacity && !upgrade.void
 
     private fun insertOrDestroy(resource: ItemVariant, maxAmount: Long, tx: TransactionContext): Long {
         insertAtMost(resource, maxAmount, tx)
